@@ -1,0 +1,32 @@
+{
+  "name": "optic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OPTIC — narrative intelligence layer for onchain markets. Cross-venue reads: memes, prediction markets, attention.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "tsx --test test/*.test.ts",
+    "attention": "tsx src/lenses/attention.ts",
+    "meme": "tsx src/lenses/meme.ts",
+    "predict": "tsx src/lenses/prediction.ts",
+    "card": "tsx src/card/render.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "better-sqlite3": "^11.8.1",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.16"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^20.17.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
