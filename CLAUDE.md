@@ -61,7 +61,7 @@ Anthropic API: narrative synthesis + divergence reasoning (structured JSON out).
 Rules: report the map, NEVER a trade instruction. No "buy/sell/long/short". Language is observational: priced-in, lagging, diverging, crowded, asleep. This is a data product, not financial advice — this keeps OKX review clean and is non-negotiable.
 
 ## Pricing + cost control
-- 1 USDT flat per read. No tiers. Impulse buy; Revenue Rocket counts orders + reviews.
+- 0.5 USDT flat per read (user-set Jul 6; was 1). No tiers. Impulse buy; Revenue Rocket counts orders + reviews.
 - COGS budget per read: ≤ 0.30 USDT total (OKX Market API fees + Venice card + Anthropic tokens). Phase 0 measures each; if over, cut API calls per read (cache!) before touching price.
 - CACHE aggressively: attention + venue data for a query cached 10 min (SQLite). Repeat queries on hot narratives are nearly free — hot narratives are exactly when call volume spikes.
 - MEDIA_BUDGET/APIs: hard per-read spend cap enforced in code; job fails cleanly if a read would exceed it.
