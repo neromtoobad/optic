@@ -37,3 +37,8 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Verdict: "Polymarket locked onto the $62k-$64k band at 90% (+32.5pts/24h) while social, onchain, and news venues sit silent — venues pricing, attention asleep."
   - Card: https://optic-production-5675.up.railway.app/v1/card/e96d1c9c-c75e-4f09-a624-4eff70436d5c
   - Proves: unpaid POST → 402 (free reject), signed replay → verify → pipeline → settle → verdict + card. The full x402 seller loop works on production.
+
+- **Jul 6, 2026 — expanded to 6 marketplace services** (update #4380)
+  - Tx: 0xa8608ea787fe9e6835f257ffb5bc0a46b4bfa81c48dca0ebccc9985c22c3b820
+  - Cross-venue read, Edge Radar, Daily Alpha (0.5 USDT each) + Rug Radar, Smart Money, Narrative Timing (0.05 USDT each)
+  - Cheap data services (~$0 COGS) priced for order volume; premium services carry the research/LLM value.
