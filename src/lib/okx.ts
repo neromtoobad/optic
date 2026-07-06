@@ -189,6 +189,59 @@ export function similarTokens(chainIndex: string, tokenContractAddress: string, 
   );
 }
 
+export interface RankingDetail {
+  tokenSymbol: string;
+  mentionCount: string;
+  xMentionCount?: string;
+  newsMentionCount?: string;
+  sentiment?: { bullishRatio: string; bearishRatio: string; label: string };
+}
+
+export function sentimentRanking(timeFrame: "1" | "2" | "3", limit: number, budget?: BudgetGuard) {
+  // timeFrame: 1=1h, 2=4h, 3=24h
+  return call<{ details?: RankingDetail[] }>(
+    "social_ranking",
+    `/api/v6/dex/market/social/sentiment/ranking?timeFrame=${timeFrame}&limit=${limit}`,
+    { tier: "basic", budget }
+  );
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  summary?: string;
+  importance?: string;
+  source?: string;
+  sourceUrl?: string;
+  timestamp?: number;
+  tokenSymbols?: string[];
+}
+
+export function newsSearch(keyword: string, limit: number, budget?: BudgetGuard) {
+  return call<{ articles?: NewsArticle[] }>(
+    "news_search",
+    `/api/v6/dex/market/social/news/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`,
+    { tier: "basic", budget }
+  );
+}
+
+export function memeTokenList(stage: "NEW" | "MIGRATING" | "MIGRATED", size: number, budget?: BudgetGuard) {
+  return call<
+    Array<{
+      symbol?: string;
+      name?: string;
+      tokenAddress?: string;
+      createdTimestamp?: string;
+      market?: { marketCapUsd?: string; volumeUsd1h?: string; txCount1h?: string };
+      tags?: { totalHolders?: string };
+    }>
+  >(
+    "memepump_list",
+    `/api/v6/dex/market/memepump/tokenList?chainIndex=501&protocolId=1&rankType=2&size=${size}&stage=${stage}`,
+    { tier: "premium", budget }
+  );
+}
+
 export const num = (s: string | number | undefined | null): number | null => {
   if (s === undefined || s === null || s === "") return null;
   const n = Number(s);

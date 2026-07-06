@@ -28,8 +28,17 @@ export interface PredictionMarket {
   question: string;
   venue: string;
   yes_price: number;
+  yes_chg_24h: number | null; // 24h move in the yes-price — odds momentum
   volume: number;
   url: string;
+}
+
+export interface UnlockNews {
+  title: string;
+  summary: string | null;
+  importance: string | null;
+  source: string | null;
+  published_at: string | null;
 }
 
 export interface PredictionVenue {
@@ -50,8 +59,40 @@ export interface Verdict {
   venues: {
     meme: MemeVenue | null;
     prediction: PredictionVenue | null;
+    unlock_news: UnlockNews[] | null; // supply-event intelligence from news — factual, never advice
+    news: UnlockNews[] | null; // research headlines for narrative subjects (sports, macro, events)
   };
   divergence: Divergence;
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
+// SCAN mode — discovery instead of a query-scoped read: where is attention
+// accelerating before it's crowded, what's fresh in the trenches, what supply
+// events are coming. Same engine, pointed at the whole market.
+export interface ScanVerdict {
+  query: string;
+  resolved: { type: "scan"; name: string };
+  scan: {
+    rising: Array<{
+      symbol: string;
+      mentions_1h: number | null;
+      mentions_24h: number | null;
+      accel_x: number | null; // 1h mention rate vs 24h baseline
+      sentiment_label: string | null;
+      bullish_ratio: number | null;
+    }>;
+    fresh_trenches: Array<{
+      symbol: string;
+      address: string | null;
+      market_cap_usd: number | null;
+      volume_1h_usd: number | null;
+    }>;
+    unlock_calendar: UnlockNews[];
+  };
+  highlights: string[];
   verdict_line: string;
   generated_at: string;
   card_url: string | null;

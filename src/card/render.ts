@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { Verdict } from "../types.js";
+import type { ScanVerdict, Verdict } from "../types.js";
 import { mockDelay, isCliEntry } from "../fixtures.js";
 import { config } from "../config.js";
 
@@ -11,7 +11,7 @@ export interface CardResult {
 // MOCK (Phase 1). Phase 3: Venice background in the locked style + composited
 // text/stats (satori or node-canvas), 1200x675 PNG, saved to the volume.
 // Runs in parallel with verdict assembly; card never blocks the verdict.
-export async function renderCard(readId: string, _verdict: Verdict): Promise<CardResult> {
+export async function renderCard(readId: string, _verdict: Verdict | ScanVerdict): Promise<CardResult> {
   await mockDelay();
   return { card_url: `${config.publicBaseUrl}/v1/card/${readId}`, pending: false };
 }

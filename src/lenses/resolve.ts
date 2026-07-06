@@ -11,9 +11,9 @@ const CLASSIFY_SCHEMA = {
   properties: {
     kind: {
       type: "string",
-      enum: ["token_address", "ticker", "narrative"],
+      enum: ["token_address", "ticker", "narrative", "scan"],
       description:
-        "token_address: a blockchain contract address (base58 or 0x...). ticker: a token symbol or memecoin name (e.g. PEPE, doge, $WIF). narrative: a story, event or theme in plain words (e.g. 'fed rate cut', 'world cup', 'AI agents').",
+        "token_address: a blockchain contract address (base58 or 0x...). ticker: a token symbol or memecoin name (e.g. PEPE, doge, $WIF). narrative: a story, event or theme in plain words (e.g. 'fed rate cut', 'world cup', 'AI agents'). scan: a discovery request over the whole market rather than one subject (e.g. 'scan', 'what's heating up', 'new narratives', 'today's unlocks').",
     },
     cleaned: {
       type: "string",
@@ -29,8 +29,10 @@ function firstToken(data: Array<{ tokenInfos?: SearchToken[] } & SearchToken> | 
   return data[0].tokenInfos?.[0] ?? data[0];
 }
 
-export async function resolve(query: string, budget: BudgetGuard): Promise<Resolved> {
-  const cls = await structuredCall<{ kind: "token_address" | "ticker" | "narrative"; cleaned: string }>({
+export type ResolvedOrScan = Resolved | { type: "scan"; name: string };
+
+export async function resolve(query: string, budget: BudgetGuard): Promise<ResolvedOrScan> {
+  const cls = await structuredCall<{ kind: "token_address" | "ticker" | "narrative" | "scan"; cleaned: string }>({
     label: "resolve_classify",
     system:
       "You classify a crypto market query. Classify precisely; do not guess a ticker out of a phrase that reads as a story or event.",
@@ -41,6 +43,9 @@ export async function resolve(query: string, budget: BudgetGuard): Promise<Resol
     effort: "low",
   });
 
+  if (cls.kind === "scan") {
+    return { type: "scan", name: "market scan" };
+  }
   if (cls.kind === "narrative") {
     return { type: "narrative", name: cls.cleaned };
   }

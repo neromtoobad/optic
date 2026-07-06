@@ -30,6 +30,7 @@ interface GammaEvent {
     slug?: string;
     outcomePrices?: string;
     volumeNum?: number;
+    oneDayPriceChange?: number;
     active?: boolean;
     closed?: boolean;
   }>;
@@ -104,6 +105,7 @@ export const predictionLens: Lens<PredictionVenue> = {
         question: m.question ?? "",
         venue: "polymarket",
         yes_price: Number(JSON.parse(m.outcomePrices ?? "[0]")[0] ?? 0),
+        yes_chg_24h: typeof m.oneDayPriceChange === "number" ? Math.round(m.oneDayPriceChange * 1000) / 1000 : null,
         volume: Math.round(m.volumeNum ?? 0),
         url: `https://polymarket.com/market/${m.slug ?? ""}`,
       }));

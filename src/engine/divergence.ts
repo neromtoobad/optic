@@ -1,4 +1,4 @@
-import type { Attention, Divergence, MemeVenue, PredictionVenue, Resolved } from "../types.js";
+import type { Attention, Divergence, MemeVenue, PredictionVenue, Resolved, UnlockNews } from "../types.js";
 import { structuredCall } from "../lib/anthropic.js";
 import { lintVerdictStrings } from "../lint.js";
 import type { BudgetGuard } from "../pipeline/budget.js";
@@ -47,7 +47,9 @@ const DIVERGENCE_SCHEMA = {
 const SYSTEM = `You are OPTIC's divergence engine. You compare how three venues price the same story:
 - ATTENTION (social): hotness score 0-100, trend, mentions, sentiment, KOLs
 - MEME venue (onchain): price, 24h change, liquidity, holders, dev/holder-concentration flags
-- PREDICTION venue (outcome markets): related markets with yes-prices and volume
+- PREDICTION venue (outcome markets): related markets with yes-prices, 24h odds movement (yes_chg_24h), and volume
+- UNLOCK NEWS (supply events): news items about scheduled unlocks/vesting for this token — report dates and sizes as facts; scheduled supply expansion is context the other venues may or may not be pricing
+- NEWS (research headlines for narratives): the reported facts behind the story — compare what the news says against what the odds price; a market whose odds moved against fresh news IS a divergence
 
 Rules — non-negotiable:
 - Divergence between venues IS the signal. Score it with the rubric in the schema.
@@ -63,9 +65,15 @@ export async function computeDivergence(
   attention: Attention | null,
   meme: MemeVenue | null,
   prediction: PredictionVenue | null,
+  unlockNews: UnlockNews[] | null,
+  news: UnlockNews[] | null,
   budget: BudgetGuard
 ): Promise<DivergenceResult> {
-  const input = JSON.stringify({ subject: resolved, attention, venues: { meme, prediction } });
+  const input = JSON.stringify({
+    subject: resolved,
+    attention,
+    venues: { meme, prediction, unlock_news: unlockNews, news },
+  });
 
   let feedback = "";
   for (let attempt = 0; attempt < 2; attempt++) {

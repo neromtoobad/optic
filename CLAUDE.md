@@ -15,10 +15,15 @@ Single-domain agents tell you what one market thinks. OPTIC tells you what the w
 ONE engine, applied through domain lenses:
 narrative → attention → per-venue read → divergence → verdict + card
 
-Lenses are data adapters, not features. v1 ships THREE lenses:
-1. MEMES — what the token/narrative is doing onchain (OKX Trenches/Token/Price APIs)
-2. PREDICTIONS — how outcome markets price the related story (Polymarket public read API)
+Lenses are data adapters, not features. v1 ships FOUR lenses + a discovery mode:
+1. MEMES — what the token/narrative is doing onchain (OKX Trenches/Token/Price APIs incl. price-info: price, chg_24h, liquidity, holders)
+2. PREDICTIONS — how outcome markets price the related story, WITH 24h odds momentum (yes_chg_24h) — this is the sports/events research read (Polymarket public read API)
 3. ATTENTION — where the crowd actually is (OKX Social Analytics: vibe/hotness timeline, sentiment, mentions, top KOLs)
+4. SUPPLY/NEWS — unlock & vesting intelligence (unlock_news, matched per token) + research headlines for narrative subjects (news), via OKX news search. Factual reporting only; the divergence engine may observe that a venue is/isn't pricing a scheduled supply event — never that anyone should act.
+
+SCAN mode (query classified as "scan", e.g. "what's heating up"): discovery read over the whole market — 1h-vs-24h mention acceleration ranking (early narrative radar), fresh trenches launches with real volume, and the unlock calendar. Same price, same endpoint, ScanVerdict shape.
+
+Positioning (user-directed, Jul 6): OPTIC sells "the research behind winning picks" — sports odds + movement + news, early narrative detection, supply-event warnings — always as data, never as picks. No success-rate or earnings claims anywhere; that framing is what passes OKX review (the eligibility gate).
 
 NFT and fan-token lenses are ROADMAP, not v1. Do not build them. The product identity is all-in-one from day one because the engine genuinely is one thing; the lenses arrive in order.
 
@@ -46,7 +51,9 @@ Anthropic API: narrative synthesis + divergence reasoning (structured JSON out).
   attention: { hotness, trend, mentions_24h, sentiment: {bull,bear,neutral}, top_kols: [..] },
   venues: {
     meme: { price, chg_24h, liquidity, holders, dev_flags, similar_tokens },
-    prediction: { markets: [{question, venue, yes_price, volume, url}] } | null
+    prediction: { markets: [{question, venue, yes_price, yes_chg_24h, volume, url}] } | null,
+    unlock_news: [{title, summary, importance, source, published_at}] | null,
+    news: [..same shape, narrative research headlines] | null
   },
   divergence: { score: 0-100, direction, one_liner, reasoning: [..] },
   verdict_line, generated_at, card_url
