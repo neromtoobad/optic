@@ -8,7 +8,17 @@ import { BudgetExceededError } from "./pipeline/budget.js";
 
 const app = new Hono<{ Variables: { paidTx?: string } }>();
 
-app.get("/v1/health", (c) => c.json({ ok: true, service: "optic", ts: new Date().toISOString() }));
+app.get("/v1/health", (c) =>
+  c.json({
+    ok: true,
+    service: "optic",
+    // Free, non-secret operational signal — lets us confirm payment enforcement
+    // without POSTing (a POST runs a paid read when payments are off).
+    payments_enforced: config.paymentsEnforced,
+    price_usdt: config.priceUsdt,
+    ts: new Date().toISOString(),
+  })
+);
 
 // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
 app.get("/v1/read", (c) => c.json({ error: "use POST" }, 405));
