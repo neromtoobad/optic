@@ -11,6 +11,7 @@ export const config = {
   priceUsdt: num("PRICE_USDT", 1),
   readBudgetUsd: num("READ_BUDGET_USD", 0.3),
   databasePath: process.env.DATABASE_PATH ?? "./data/optic.db",
+  cardsDir: process.env.CARDS_DIR ?? "./data/cards",
   publicBaseUrl: process.env.PUBLIC_BASE_URL ?? "http://localhost:3000",
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
   paymentsEnforced: process.env.PAYMENTS_ENFORCED === "true",

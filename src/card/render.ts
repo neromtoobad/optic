@@ -16,7 +16,7 @@ export interface CardResult {
 
 const W = 1200;
 const H = 672;
-const CARDS_DIR = "./data/cards";
+const CARDS_DIR = config.cardsDir; // on Railway this lives on the mounted volume
 
 const AMBER = "#f5a623";
 const INK = "#e8ebf2";
