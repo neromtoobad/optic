@@ -42,3 +42,8 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Tx: 0xa8608ea787fe9e6835f257ffb5bc0a46b4bfa81c48dca0ebccc9985c22c3b820
   - Cross-venue read, Edge Radar, Daily Alpha (0.5 USDT each) + Rug Radar, Smart Money, Narrative Timing (0.05 USDT each)
   - Cheap data services (~$0 COGS) priced for order volume; premium services carry the research/LLM value.
+
+- **Jul 6, 2026 — first paid read on a cheap service (Rug Radar, 0.05 USDT)**
+  - Payment tx: 0xb408ff03df6f70a740e2d2b65fece5b5acb34e1f0369f2ba36296db8d44eb604 (SUCCESS on X Layer)
+  - Service: Rug Radar /v1/rug · query LUZAI token · result: risk 54/100 elevated (dev holds 57%, top-100 own 100%)
+  - Proves the full six-service x402 loop settles end to end, including the cheap 0.05 tier.
