@@ -40,9 +40,16 @@ async function veniceResearch(subject: string, budget: BudgetGuard): Promise<Res
     headers: { Authorization: `Bearer ${config.veniceApiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: MODEL,
-      venice_parameters: { enable_web_search: "on", include_search_results_in_stream: false },
+      // disable_thinking: this is a reasoning model — without it, thinking eats the
+      // token budget and content comes back empty (10 citations, no brief).
+      venice_parameters: {
+        enable_web_search: "on",
+        enable_web_citations: true,
+        disable_thinking: true,
+        strip_thinking_response: true,
+      },
       messages: [{ role: "user", content: prompt(subject) }],
-      max_tokens: 1200,
+      max_tokens: 1000,
     }),
     signal: AbortSignal.timeout(75_000),
   });
@@ -71,23 +78,27 @@ async function veniceResearch(subject: string, budget: BudgetGuard): Promise<Res
   return { brief, sources };
 }
 
-export async function researchFor(resolved: Resolved, budget: BudgetGuard): Promise<ResearchBrief | null> {
-  // Research adds most value for event/narrative subjects; token diligence is
-  // already covered by the onchain lenses.
-  if (resolved.type !== "narrative") return null;
-
-  const key = cacheKey("research", resolved.name.toLowerCase());
+/** Research any subject string (cached 10m). The reusable core. */
+export async function researchSubject(subject: string, budget: BudgetGuard): Promise<ResearchBrief | null> {
+  if (!subject.trim()) return null;
+  const key = cacheKey("research", subject.toLowerCase());
   const cached = cacheGet<ResearchBrief>(key);
   if (cached !== undefined) return cached;
-
   try {
-    const out = await veniceResearch(resolved.name, budget);
+    const out = await veniceResearch(subject, budget);
     if (out) cacheSet(key, out);
     return out;
   } catch (err) {
     console.error(`research: ${err}`);
     return null; // research is additive — never fail the read on it
   }
+}
+
+export async function researchFor(resolved: Resolved, budget: BudgetGuard): Promise<ResearchBrief | null> {
+  // Research adds most value for event/narrative subjects; token diligence is
+  // already covered by the onchain lenses.
+  if (resolved.type !== "narrative") return null;
+  return researchSubject(resolved.name, budget);
 }
 
 if (isCliEntry(import.meta.url)) {

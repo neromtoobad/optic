@@ -120,7 +120,9 @@ export interface DailyTip {
 export interface DailyVerdict {
   query: string;
   resolved: { type: "daily"; name: string };
+  top_call: { headline: string; reason: string; category: DailyTip["category"] }; // OPTIC's single most decisive call of the day
   tips: DailyTip[];
+  research: { brief: string; sources: string[] } | null; // web research behind the top call
   research_note: string; // what was scanned to produce these
   verdict_line: string;
   generated_at: string;
