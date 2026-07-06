@@ -20,4 +20,11 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
 
 ## Sales
 
-(x402 settlements land here from Phase 4 onward: tx hash, read id, card link, timestamp)
+- **Jul 6, 2026 — first real paid read (x402, live on X Layer)**
+  - Payment tx: `0xfa7f00f3810369e5246d645d8d5282c14f6620d9a45655f24d8ef93b465da106`
+  - Amount: 0.5 USDT0 · payer `0xda30617e4d23810eb948724a4dce0452dfda7e9d` → payout (same wallet, self-test)
+  - Scheme: exact (EIP-3009), network eip155:196, settlement status: success (pending async settle)
+  - Read: `e96d1c9c-c75e-4f09-a624-4eff70436d5c` — query "bitcoin 100k", divergence 28
+  - Verdict: "Polymarket locked onto the $62k-$64k band at 90% (+32.5pts/24h) while social, onchain, and news venues sit silent — venues pricing, attention asleep."
+  - Card: https://optic-production-5675.up.railway.app/v1/card/e96d1c9c-c75e-4f09-a624-4eff70436d5c
+  - Proves: unpaid POST → 402 (free reject), signed replay → verify → pipeline → settle → verdict + card. The full x402 seller loop works on production.
