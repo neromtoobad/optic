@@ -52,6 +52,11 @@ export interface Divergence {
   reasoning: string[];
 }
 
+export interface Research {
+  brief: string; // web-researched real-world context (form, injuries, catalysts)
+  sources: string[];
+}
+
 export interface Verdict {
   query: string;
   resolved: Resolved;
@@ -62,6 +67,7 @@ export interface Verdict {
     unlock_news: UnlockNews[] | null; // supply-event intelligence from news — factual, never advice
     news: UnlockNews[] | null; // research headlines for narrative subjects (sports, macro, events)
   };
+  research: Research | null; // the value-add: web research behind the market read
   divergence: Divergence;
   verdict_line: string;
   generated_at: string;

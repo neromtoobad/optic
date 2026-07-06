@@ -5,6 +5,7 @@ import { attentionLens } from "../lenses/attention.js";
 import { memeLens } from "../lenses/meme.js";
 import { predictionLens } from "../lenses/prediction.js";
 import { newsFor, unlockNewsFor } from "../lenses/unlocks.js";
+import { researchFor } from "../lenses/research.js";
 import { runScan } from "../scan/index.js";
 import { runDaily } from "../daily/index.js";
 import { computeDivergence } from "../engine/divergence.js";
@@ -48,12 +49,13 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
     } else {
       // Each lens registers real per-call costs with the budget guard; any lens
       // may return null and the divergence engine treats absence as signal.
-      const [attention, meme, prediction, unlockNews, news] = await Promise.all([
+      const [attention, meme, prediction, unlockNews, news, research] = await Promise.all([
         attentionLens.read(resolved, budget),
         memeLens.read(resolved, budget),
         predictionLens.read(resolved, budget),
         unlockNewsFor(resolved, budget),
         newsFor(resolved, budget),
+        researchFor(resolved, budget),
       ]);
       mark("lenses");
 
@@ -64,6 +66,7 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         prediction,
         unlockNews,
         news,
+        research,
         budget
       );
 
@@ -89,6 +92,7 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         resolved,
         attention,
         venues: { meme, prediction, unlock_news: unlockNews, news },
+        research,
         divergence,
         verdict_line,
         generated_at: new Date().toISOString(),

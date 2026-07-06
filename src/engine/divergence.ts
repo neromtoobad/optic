@@ -1,4 +1,4 @@
-import type { Attention, Divergence, MemeVenue, PredictionVenue, Resolved, UnlockNews } from "../types.js";
+import type { Attention, Divergence, MemeVenue, PredictionVenue, Research, Resolved, UnlockNews } from "../types.js";
 import { structuredCall } from "../lib/anthropic.js";
 import { lintVerdictStrings } from "../lint.js";
 import type { BudgetGuard } from "../pipeline/budget.js";
@@ -50,9 +50,11 @@ const SYSTEM = `You are OPTIC's divergence engine. You compare how three venues 
 - PREDICTION venue (outcome markets): related markets with yes-prices, 24h odds movement (yes_chg_24h), and volume
 - UNLOCK NEWS (supply events): news items about scheduled unlocks/vesting for this token — report dates and sizes as facts; scheduled supply expansion is context the other venues may or may not be pricing
 - NEWS (research headlines for narratives): the reported facts behind the story — compare what the news says against what the odds price; a market whose odds moved against fresh news IS a divergence
+- RESEARCH (web-sourced context — the value-add): recent form, injuries, roster/lineup news, weather, catalysts for the subject. This is the WHY behind the market read. When research is present, your job is to EXPLAIN the odds with it and flag where the research adds nuance the raw number misses (e.g. "favourite is missing two starters — the underdog price may be softer than it looks"). Cite specific researched facts. This is what makes the read worth paying for — do not ignore it when present.
 
 Rules — non-negotiable:
 - Divergence between venues IS the signal. Score it with the rubric in the schema.
+- When research is present, the verdict_line and reasoning should lead with the substantive read (favourite + the key research factor), not just the divergence score.
 - A null venue is itself signal: no prediction market pricing a hot story means attention is unhedged; say so.
 - NEVER invent data. Every claim cites a number present in the input.
 - Report the map, never a trade instruction. Observational language only: priced-in, lagging, diverging, crowded, asleep, unhedged.
@@ -67,12 +69,14 @@ export async function computeDivergence(
   prediction: PredictionVenue | null,
   unlockNews: UnlockNews[] | null,
   news: UnlockNews[] | null,
+  research: Research | null,
   budget: BudgetGuard
 ): Promise<DivergenceResult> {
   const input = JSON.stringify({
     subject: resolved,
     attention,
     venues: { meme, prediction, unlock_news: unlockNews, news },
+    research: research?.brief ?? null,
   });
 
   let feedback = "";

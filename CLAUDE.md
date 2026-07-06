@@ -20,6 +20,7 @@ Lenses are data adapters, not features. v1 ships FOUR lenses + a discovery mode:
 2. PREDICTIONS — how outcome markets price the related story, WITH 24h odds momentum (yes_chg_24h) — this is the sports/events research read (Polymarket public read API)
 3. ATTENTION — where the crowd actually is (OKX Social Analytics: vibe/hotness timeline, sentiment, mentions, top KOLs)
 4. SUPPLY/NEWS — unlock & vesting intelligence (unlock_news, matched per token) + research headlines for narrative subjects (news), via OKX news search. Factual reporting only; the divergence engine may observe that a venue is/isn't pricing a scheduled supply event — never that anyone should act.
+5. RESEARCH — the value-add layer: for event/sports/macro narratives, Venice web search pulls recent real-world context (form, injuries, roster news, weather, catalysts) and the divergence engine synthesises it WITH the market odds. Turns "here are the odds" into "here are the odds + the why + where the research adds nuance". Reuses the Venice key. Anthropic server-side web search was tried and is throttled/unusable on our key (-e.22/failed call) — do not use it.
 
 SCAN mode (query classified as "scan", e.g. "what's heating up"): discovery read over the whole market — 1h-vs-24h mention acceleration ranking (early narrative radar), fresh trenches launches with real volume, and the unlock calendar. Same price, same endpoint, ScanVerdict shape.
 

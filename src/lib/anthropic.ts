@@ -52,3 +52,4 @@ export async function structuredCall<T>(opts: {
   }
   return JSON.parse(text.text) as T;
 }
+
