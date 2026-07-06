@@ -47,17 +47,21 @@ Headers: `OK-ACCESS-KEY`, `OK-ACCESS-PASSPHRASE`, `OK-ACCESS-TIMESTAMP` (ISO),
 - Garbage queries fuzzy-match CLOSED markets → lens must filter `active && !closed` + volume floor (implemented)
 - Live World Cup 2026 + Fed rate markets confirmed — demo material
 
-## Venice card gate (Phase 0-D, decided Jul 6)
+## Venice card gate (Phase 0-D, decided Jul 6; style locked after iteration)
 - **DECISION: composite approach locked.** Venice background + code-composited text.
   Pure-AI text (ideogram-v4, $0.06) mangled every number ("$$1;62612") and ignored
   the 1200x672 frame — unusable for a stats product. Composite is pixel-sharp.
-- **Locked: model `z-image-turbo`, $0.01/card, ~4s.** Style prompt: "abstract dark
-  navy financial data landscape, luminous amber/cyan data streams diverging, subtle
-  grid horizon, no text" — divergence as the literal visual motif.
-- Composite layer: HTML/CSS template (fixtures/cards/card_template.html) — dark scrim
-  over bg, kicker, title, verdict line, divergence meter w/ score, three venue chips,
-  OPTIC · okx.ai mark. Phase 3 renders it headless (satori or browser).
+- **Style LOCKED: "Instrument" (user-approved from 3 variants).** Reticle corner
+  marks (lens motif), Space Grotesk headline + IBM Plex Mono data, amber 68/100
+  divergence numeral top-right with tick gauge, venue stats as bottom data strip,
+  OPTIC brand top-left with amber I. Template: fixtures/cards/card_template.html.
+- **Background locked: model `z-image-turbo`, $0.01/card, ~4s.** Prompt: "very dark
+  near-black abstract, two thin luminous streams (amber/cyan) splitting apart and
+  diverging toward opposite corners, particle trails, deep black negative space,
+  film grain, no text" — divergence as the literal visual motif.
 - Sample: fixtures/cards/sample_btc100k.png (built from REAL Jul 6 fixture data).
+- Phase 3 note: template loads Space Grotesk/IBM Plex Mono from Google Fonts CDN —
+  bundle the font files locally for server-side rendering (satori needs them anyway).
 - **COGS per read (all measured): OKX ~$0 (free quota) + Venice $0.01 + Anthropic
   (est. $0.02–0.05) ≈ $0.03–0.06 — 5–10x under the $0.30 cap.**
 
