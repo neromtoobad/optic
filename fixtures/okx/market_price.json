@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/price",
+    "fetched": "2026-07-06T09:53:16.904Z",
+    "status": 200,
+    "latencyMs": 585
+  },
+  "code": "0",
+  "data": [
+    {
+      "chainIndex": "501",
+      "price": "0.0004241765821701907173521375240196636",
+      "time": "1783331596997",
+      "tokenContractAddress": "B5WTLaRwaUQpKk7ir1wniNB6m5o8GgMrimhKMYan2R6B"
+    }
+  ],
+  "msg": ""
+}

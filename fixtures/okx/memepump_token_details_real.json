@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/memepump/tokenDetails?chainIndex=501&tokenContractAddress=6g2ifQHewJ3CgD3ysAhcm9J6z4TtXYdRQ3S5Xx4vpump",
+    "fetched": "2026-07-06T09:53:17.948Z",
+    "status": 200,
+    "latencyMs": 496
+  },
+  "code": "0",
+  "data": {
+    "aped": "2",
+    "bagsFeeClaimed": false,
+    "bondingPercent": "100",
+    "chainIndex": "501",
+    "createdTimestamp": "1772849688000",
+    "creatorAddress": "ExWwXwEQz6hKXUQY8yHibwfxSB6BA6jbRWVfc8KcwjFV",
+    "logoUrl": "https://static.oklink.com/cdn/web3/currency/token/large/501-6g2ifQHewJ3CgD3ysAhcm9J6z4TtXYdRQ3S5Xx4vpump-107/type=default_90_0?v=1783261635682",
+    "market": {
+      "buyTxCount1h": "49",
+      "marketCapUsd": "32907.463226950274321166",
+      "sellTxCount1h": "4",
+      "txCount1h": "53",
+      "volumeUsd1h": "4063.77162753324"
+    },
+    "migratedBeginTimestamp": "1783331553000",
+    "migratedEndTimestamp": "1783331556000",
+    "name": "Luzcoin AI",
+    "protocolId": "120596",
+    "quoteTokenAddress": "",
+    "social": {
+      "communityTakeover": false,
+      "dexScreenerPaid": false,
+      "liveOnPumpFun": false,
+      "telegram": "",
+      "website": "",
+      "x": ""
+    },
+    "symbol": "LUZAI",
+    "tags": {
+      "bundlersPercent": "",
+      "devHoldingsPercent": "64.141",
+      "freshWalletsPercent": "",
+      "insidersPercent": "0",
+      "snipersPercent": "64.141",
+      "suspectedPhishingWalletPercent": "",
+      "top10HoldingsPercent": "78.2104",
+      "totalHolders": "43"
+    },
+    "tokenAddress": "6g2ifQHewJ3CgD3ysAhcm9J6z4TtXYdRQ3S5Xx4vpump"
+  },
+  "msg": ""
+}

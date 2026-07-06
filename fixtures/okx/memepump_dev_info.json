@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/memepump/tokenDevInfo?chainIndex=501&tokenContractAddress=6g2ifQHewJ3CgD3ysAhcm9J6z4TtXYdRQ3S5Xx4vpump",
+    "fetched": "2026-07-06T09:53:18.440Z",
+    "status": 200,
+    "latencyMs": 489
+  },
+  "code": "0",
+  "data": {
+    "devHoldingInfo": {
+      "devAddress": "ExWwXwEQz6hKXUQY8yHibwfxSB6BA6jbRWVfc8KcwjFV",
+      "devBalance": "0.00708428",
+      "devHoldingPercent": "64.141",
+      "fundingAddress": "8QCVZ7KL65pBhUxbvfwbyyg4ronxNAEXbDrGLYLrRNn5",
+      "lastFundedTimestamp": "1772848909000"
+    },
+    "devLaunchedInfo": {
+      "goldenGemCount": "0",
+      "migratedCount": "0",
+      "rugPullCount": "0",
+      "totalTokens": "1"
+    }
+  },
+  "msg": ""
+}

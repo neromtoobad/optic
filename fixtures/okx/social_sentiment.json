@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/social/sentiment/symbol?tokenSymbols=Pepe&timeFrame=3&trendPoints=12",
+    "fetched": "2026-07-06T09:53:14.000Z",
+    "status": 200,
+    "latencyMs": 466
+  },
+  "code": "0",
+  "data": {
+    "details": [
+      {
+        "mentionCount": "9",
+        "newsMentionCount": "0",
+        "sentiment": {
+          "bearishCnt": "0",
+          "bearishRatio": "0.00",
+          "bullishCnt": "7",
+          "bullishRatio": "0.78",
+          "label": "bullish",
+          "neutralCnt": "2"
+        },
+        "tokenSymbol": "PEPE",
+        "trend": [
+          {
+            "bearishRatio": "0.09",
+            "bullishRatio": "0.45",
+            "mentionCount": "11",
+            "ts": "1782259200000"
+          },
+          {
+            "bearishRatio": "0.18",
+            "bullishRatio": "0.64",
+            "mentionCount": "11",
+            "ts": "1782345600000"
+          },
+          {
+            "bearishRatio": "0.18",
+            "bullishRatio": "0.55",
+            "mentionCount": "22",
+            "ts": "1782432000000"
+          },
+          {
+            "bearishRatio": "0.00",
+            "bullishRatio": "0.79",
+            "mentionCount": "14",
+            "ts": "1782518400000"
+          },
+          {
+            "bearishRatio": "0.00",
+            "bullishRatio": "0.40",
+            "mentionCount": "5",
+            "ts": "1782604800000"
+          },
+          {
+            "bearishRatio": "0.06",
+            "bullishRatio": "0.59",
+            "mentionCount": "17",
+            "ts": "1782691200000"
+          },
+          {
+            "bearishRatio": "0.07",
+            "bullishRatio": "0.60",
+            "mentionCount": "15",
+            "ts": "1782777600000"
+          },
+          {
+            "bearishRatio": "0.00",
+            "bullishRatio": "0.69",
+            "mentionCount": "16",
+            "ts": "1782864000000"
+          },
+          {
+            "bearishRatio": "0.00",
+            "bullishRatio": "0.79",
+            "mentionCount": "14",
+            "ts": "1782950400000"
+          },
+          {
+            "bearishRatio": "0.05",
+            "bullishRatio": "0.73",
+            "mentionCount": "22",
+            "ts": "1783036800000"
+          },
+          {
+            "bearishRatio": "0.03",
+            "bullishRatio": "0.67",
+            "mentionCount": "33",
+            "ts": "1783123200000"
+          },
+          {
+            "bearishRatio": "0.00",
+            "bullishRatio": "0.78",
+            "mentionCount": "9",
+            "ts": "1783209600000"
+          }
+        ],
+        "xMentionCount": "9"
+      }
+    ],
+    "period": "24h",
+    "ts": "1783209600000"
+  },
+  "msg": ""
+}

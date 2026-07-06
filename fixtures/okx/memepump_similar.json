@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/memepump/similarToken?chainIndex=501&tokenContractAddress=B5WTLaRwaUQpKk7ir1wniNB6m5o8GgMrimhKMYan2R6B",
+    "fetched": "2026-07-06T09:53:16.316Z",
+    "status": 200,
+    "latencyMs": 852
+  },
+  "code": "0",
+  "data": [
+    {
+      "createdTimestamp": "1730746576000",
+      "lastTxTimestamp": "1783331563000",
+      "marketCapUsd": "107038.101563596676035067",
+      "tokenAddress": "21Dt6Ne2tQ8wQ5j6G2zahtF1tskJqRmtSaaSwXjyBJVz",
+      "tokenLogo": "https://static.oklink.com/cdn/web3/currency/token/large/501-21Dt6Ne2tQ8wQ5j6G2zahtF1tskJqRmtSaaSwXjyBJVz-107/type=default_90_0?v=1783283657087",
+      "tokenSymbol": "PEPE"
+    },
+    {
+      "createdTimestamp": "1730695059000",
+      "lastTxTimestamp": "1783313653000",
+      "marketCapUsd": "100837.632012325333395756",
+      "tokenAddress": "F9CpWoyeBJfoRB8f2pBe2ZNPbPsEE76mWZWme3StsvHK",
+      "tokenLogo": "https://static.oklink.com/cdn/web3/currency/token/large/501-F9CpWoyeBJfoRB8f2pBe2ZNPbPsEE76mWZWme3StsvHK-108/type=default_90_0?v=1755790534614",
+      "tokenSymbol": "PEPE"
+    }
+  ],
+  "msg": ""
+}

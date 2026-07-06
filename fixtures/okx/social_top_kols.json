@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/social/vibe/top-kols?chainIndex=501&tokenAddress=B5WTLaRwaUQpKk7ir1wniNB6m5o8GgMrimhKMYan2R6B&sortBy=3&timeFrame=1&limit=5",
+    "fetched": "2026-07-06T09:53:14.993Z",
+    "status": 200,
+    "latencyMs": 491
+  },
+  "code": "0",
+  "data": {
+    "kols": [
+      {
+        "avatar": "https://static.okx.com/cdn/trade/content/2026-05-08/image/019e033f-3d8c-74d2-9d9e-32ffcf9785fb.jpg",
+        "engagement": "51035",
+        "firstMention": {
+          "contentId": "75781278502208",
+          "time": "1783250971645",
+          "tweetUrl": "https://x.com/blknoiz06/status/75781278502208"
+        },
+        "followers": "1116796",
+        "handle": "blknoiz06",
+        "impressions": "8185491",
+        "mentions": "0",
+        "nickname": "Ansem 🐂🀄️"
+      },
+      {
+        "avatar": "https://static.okx.com/cdn/trade/content/2026-06-05/image/019e9372-1580-7cb3-9037-5b67ccd4066b.jpg",
+        "engagement": "1324",
+        "firstMention": {
+          "contentId": "81016765155328",
+          "time": "1783249930929",
+          "tweetUrl": "https://x.com/JamesWynnReal/status/81016765155328"
+        },
+        "followers": "476856",
+        "handle": "JamesWynnReal",
+        "impressions": "426711",
+        "mentions": "0",
+        "nickname": "James Wynn"
+      },
+      {
+        "avatar": "https://static.okx.com/cdn/trade/content/2026-02-06/image/920562f3-eff0-4344-bbed-64bf26aa0f20.jpg",
+        "engagement": "963",
+        "firstMention": {
+          "contentId": "80878578132992",
+          "time": "1783266183556",
+          "tweetUrl": "https://x.com/CryptoGodJohn/status/80878578132992"
+        },
+        "followers": "874375",
+        "handle": "CryptoGodJohn",
+        "impressions": "128328",
+        "mentions": "0",
+        "nickname": "John"
+      },
+      {
+        "avatar": "https://static.okx.com/cdn/trade/content/2025-01-01/image/412450e2-9a1a-46a6-ad8e-dbcdd0abf406.jpg",
+        "engagement": "1390",
+        "firstMention": {
+          "contentId": "80948716749888",
+          "time": "1783248277456",
+          "tweetUrl": "https://x.com/JakeGagain/status/80948716749888"
+        },
+        "followers": "413995",
+        "handle": "JakeGagain",
+        "impressions": "63889",
+        "mentions": "0",
+        "nickname": "JAKE"
+      },
+      {
+        "avatar": "https://static.okx.com/cdn/trade/content/2025-08-09/image/6824a904-f734-4578-a4c8-0e02b2d7a4f3.jpg",
+        "engagement": "124",
+        "firstMention": {
+          "contentId": "81123752168512",
+          "time": "1783289608000",
+          "tweetUrl": "https://x.com/TraderMotif/status/81123752168512"
+        },
+        "followers": "63482",
+        "handle": "TraderMotif",
+        "impressions": "6467",
+        "mentions": "2",
+        "nickname": "Motif"
+      }
+    ]
+  },
+  "msg": ""
+}

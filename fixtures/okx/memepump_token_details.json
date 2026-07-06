@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/memepump/tokenDetails?chainIndex=501&tokenContractAddress=B5WTLaRwaUQpKk7ir1wniNB6m5o8GgMrimhKMYan2R6B",
+    "fetched": "2026-07-06T09:53:15.463Z",
+    "status": 200,
+    "latencyMs": 469
+  },
+  "code": "0",
+  "data": null,
+  "msg": ""
+}

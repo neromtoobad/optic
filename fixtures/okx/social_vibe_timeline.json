@@ -1,0 +1,199 @@
+{
+  "_meta": {
+    "path": "/api/v6/dex/market/social/vibe/timeline?chainIndex=501&tokenAddress=B5WTLaRwaUQpKk7ir1wniNB6m5o8GgMrimhKMYan2R6B&timeFrame=1",
+    "fetched": "2026-07-06T09:53:14.500Z",
+    "status": 200,
+    "latencyMs": 496
+  },
+  "code": "0",
+  "data": {
+    "summary": {
+      "engagement": "56693",
+      "engagementChangeRate": "257.23",
+      "impressions": "8843564",
+      "impressionsChangeRate": "135.14",
+      "mentionsCount": "10",
+      "mentionsCountChangeRate": "0",
+      "score": "54.912074939981146",
+      "scoreChangeRate": "-0.78",
+      "scoreRange": "0-100",
+      "scoreType": "dex_vibe_hotness",
+      "supportFirstMentioned": false
+    },
+    "timeline": [
+      {
+        "kols": [
+          {
+            "avatar": "https://static.okx.com/cdn/trade/content/2025-08-09/image/70b75904-23ba-4949-b362-93869571f7b3.jpg",
+            "followers": "14170",
+            "handle": "PepeCZBinance",
+            "nickname": "PEPE ON FIRE 🔥"
+          }
+        ],
+        "mentionCount": "1",
+        "score": "56.01026006389764",
+        "ts": "1783245600000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "56.811879487866854",
+        "ts": "1783249200000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.119623808404285",
+        "ts": "1783252800000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "53.86488992064651",
+        "ts": "1783256400000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "53.347624629920254",
+        "ts": "1783260000000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "53.48586073094577",
+        "ts": "1783263600000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "52.5853133115142",
+        "ts": "1783267200000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "51.860759258832445",
+        "ts": "1783270800000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "51.47292954545984",
+        "ts": "1783274400000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.85078061622687",
+        "ts": "1783278000000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.95182475419908",
+        "ts": "1783281600000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "52.88346971657451",
+        "ts": "1783285200000"
+      },
+      {
+        "kols": [
+          {
+            "avatar": "https://static.okx.com/cdn/trade/content/2025-08-09/image/6824a904-f734-4578-a4c8-0e02b2d7a4f3.jpg",
+            "followers": "63482",
+            "handle": "TraderMotif",
+            "nickname": "Motif"
+          }
+        ],
+        "mentionCount": "1",
+        "score": "54.334010267198906",
+        "ts": "1783288800000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "55.660258966754746",
+        "ts": "1783292400000"
+      },
+      {
+        "kols": [
+          {
+            "avatar": "https://static.okx.com/cdn/trade/content/2025-10-08/image/f6536462-b342-4730-81c4-e1334ea8cf6a.png",
+            "followers": "13371",
+            "handle": "PepecoinNetwork",
+            "nickname": "Pepecoin"
+          }
+        ],
+        "mentionCount": "1",
+        "score": "56.365091270340365",
+        "ts": "1783296000000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "56.470901952351504",
+        "ts": "1783299600000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.3136049884545",
+        "ts": "1783303200000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "55.23665276059791",
+        "ts": "1783306800000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "55.75536980601636",
+        "ts": "1783310400000"
+      },
+      {
+        "kols": [
+          {
+            "avatar": "https://static.okx.com/cdn/trade/content/2026-05-08/image/019e0348-adfc-7492-8202-caa41c2d4f02.jpg",
+            "followers": "42707",
+            "handle": "WhalePiz",
+            "nickname": "Piz"
+          }
+        ],
+        "mentionCount": "1",
+        "score": "55.865115108567366",
+        "ts": "1783314000000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.52751267933272",
+        "ts": "1783317600000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "56.39550456536341",
+        "ts": "1783321200000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "54.912074939981146",
+        "ts": "1783324800000"
+      },
+      {
+        "kols": [],
+        "mentionCount": "",
+        "score": "",
+        "ts": "1783328400000"
+      }
+    ]
+  },
+  "msg": ""
+}
