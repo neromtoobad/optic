@@ -1,28 +1,89 @@
 import type { Attention, Divergence, MemeVenue, PredictionVenue, Resolved } from "../types.js";
-import { loadFixture, mockDelay } from "../fixtures.js";
+import { structuredCall } from "../lib/anthropic.js";
 import { lintVerdictStrings } from "../lint.js";
+import type { BudgetGuard } from "../pipeline/budget.js";
 
 export interface DivergenceResult {
   divergence: Divergence;
   verdict_line: string;
 }
 
-// MOCK (Phase 1). Phase 2: Anthropic call with strict JSON schema comparing
-// venue reads. Nulls are signal ("attention is unhedged"). Observational
-// language only — output must pass the banned-word lint.
-export async function computeDivergence(
-  _resolved: Resolved,
-  _attention: Attention | null,
-  _meme: MemeVenue | null,
-  _prediction: PredictionVenue | null
-): Promise<DivergenceResult> {
-  await mockDelay();
-  const v = loadFixture<{ divergence: Divergence; verdict_line: string }>("verdict");
-  const result = { divergence: v.divergence, verdict_line: v.verdict_line };
+const DIVERGENCE_SCHEMA = {
+  type: "object",
+  properties: {
+    score: {
+      type: "integer",
+      description:
+        "Divergence 0-100. Rubric: 0-20 venues aligned; 21-50 mild lag between venues; 51-80 clear divergence; 81-100 extreme disconnect. Judge how differently the venues price the SAME story.",
+    },
+    direction: {
+      type: "string",
+      enum: [
+        "aligned",
+        "attention_ahead_of_venues",
+        "venues_ahead_of_attention",
+        "meme_ahead_of_prediction",
+        "prediction_ahead_of_meme",
+      ],
+    },
+    one_liner: {
+      type: "string",
+      description: "One sentence citing the single strongest concrete fact behind the score.",
+    },
+    reasoning: {
+      type: "array",
+      items: { type: "string" },
+      description: "2-4 short observations comparing the venue reads. Each cites data present in the input.",
+    },
+    verdict_line: {
+      type: "string",
+      description: "The shareable headline read, <= 140 chars, observational.",
+    },
+  },
+  required: ["score", "direction", "one_liner", "reasoning", "verdict_line"],
+  additionalProperties: false,
+} as const;
 
-  const lint = lintVerdictStrings([result.verdict_line, result.divergence.one_liner, ...result.divergence.reasoning]);
-  if (!lint.ok) {
-    throw new Error(`divergence output failed banned-word lint: ${JSON.stringify(lint.violations)}`);
+const SYSTEM = `You are OPTIC's divergence engine. You compare how three venues price the same story:
+- ATTENTION (social): hotness score 0-100, trend, mentions, sentiment, KOLs
+- MEME venue (onchain): price, 24h change, liquidity, holders, dev/holder-concentration flags
+- PREDICTION venue (outcome markets): related markets with yes-prices and volume
+
+Rules — non-negotiable:
+- Divergence between venues IS the signal. Score it with the rubric in the schema.
+- A null venue is itself signal: no prediction market pricing a hot story means attention is unhedged; say so.
+- NEVER invent data. Every claim cites a number present in the input.
+- Report the map, never a trade instruction. Observational language only: priced-in, lagging, diverging, crowded, asleep, unhedged.
+- BANNED words (will fail lint): buy, sell, long, short, ape, moon. Also no action/advice verbs of any kind: accumulate, exit, exploit, fade, play, enter, bet.
+- Numbers: round sensibly; percentages with one decimal at most.`;
+
+// DIVERGENCE engine — the one comparison at the heart of OPTIC.
+export async function computeDivergence(
+  resolved: Resolved,
+  attention: Attention | null,
+  meme: MemeVenue | null,
+  prediction: PredictionVenue | null,
+  budget: BudgetGuard
+): Promise<DivergenceResult> {
+  const input = JSON.stringify({ subject: resolved, attention, venues: { meme, prediction } });
+
+  let feedback = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const out = await structuredCall<Divergence & { verdict_line: string }>({
+      label: attempt === 0 ? "divergence" : "divergence_retry",
+      system: SYSTEM,
+      user: input + feedback,
+      schema: DIVERGENCE_SCHEMA as unknown as Record<string, unknown>,
+      budget,
+      maxTokens: 700,
+    });
+
+    const { verdict_line, ...divergence } = out;
+    const lint = lintVerdictStrings([verdict_line, divergence.one_liner, ...divergence.reasoning]);
+    if (lint.ok) {
+      return { divergence, verdict_line };
+    }
+    feedback = `\n\nYour previous output failed the language lint on: ${JSON.stringify(lint.violations.map((v) => v.word))}. Rewrite without those words.`;
   }
-  return result;
+  throw new Error("divergence output failed banned-word lint after retry");
 }

@@ -8,20 +8,20 @@ export interface Resolved {
 }
 
 export interface Attention {
-  hotness: number;
+  hotness: number | null;
   trend: string;
-  mentions_24h: number;
-  sentiment: { bull: number; bear: number; neutral: number };
-  top_kols: Array<{ handle: string; impressions: number }>;
+  mentions_24h: number | null;
+  sentiment: { bull: number; bear: number; neutral: number } | null;
+  top_kols: Array<{ handle: string; impressions: number | null; followers?: number | null }>;
 }
 
 export interface MemeVenue {
-  price: number;
-  chg_24h: number;
-  liquidity: number;
-  holders: number;
-  dev_flags: Record<string, unknown>;
-  similar_tokens: Array<{ name: string; chain: string; liquidity: number }>;
+  price: number | null;
+  chg_24h: number | null;
+  liquidity: number | null;
+  holders: number | null;
+  dev_flags: Record<string, unknown> | null;
+  similar_tokens: Array<{ name: string; chain: string; market_cap_usd: number | null }>;
 }
 
 export interface PredictionMarket {
@@ -58,9 +58,11 @@ export interface Verdict {
   card_pending?: boolean;
 }
 
+import type { BudgetGuard } from "./pipeline/budget.js";
+
 // Lenses are adapters behind one interface. Any lens may return null —
 // absence is signal, never invented data.
 export interface Lens<T> {
   name: string;
-  read(resolved: Resolved): Promise<T | null>;
+  read(resolved: Resolved, budget: BudgetGuard): Promise<T | null>;
 }

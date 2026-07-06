@@ -28,15 +28,16 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
   const budget = new BudgetGuard();
 
   try {
-    const resolved = await resolve(query);
-    // Phase 2: each lens registers real per-call costs with the budget guard.
+    const resolved = await resolve(query, budget);
+    // Each lens registers real per-call costs with the budget guard; any lens
+    // may return null and the divergence engine treats absence as signal.
     const [attention, meme, prediction] = await Promise.all([
-      attentionLens.read(resolved),
-      memeLens.read(resolved),
-      predictionLens.read(resolved),
+      attentionLens.read(resolved, budget),
+      memeLens.read(resolved, budget),
+      predictionLens.read(resolved, budget),
     ]);
 
-    const { divergence, verdict_line } = await computeDivergence(resolved, attention, meme, prediction);
+    const { divergence, verdict_line } = await computeDivergence(resolved, attention, meme, prediction, budget);
 
     const verdict: Verdict = {
       query,
