@@ -12,7 +12,7 @@ export const config = {
   readBudgetUsd: num("READ_BUDGET_USD", 0.3),
   databasePath: process.env.DATABASE_PATH ?? "./data/optic.db",
   cardsDir: process.env.CARDS_DIR ?? "./data/cards",
-  publicBaseUrl: process.env.PUBLIC_BASE_URL ?? "http://localhost:3000",
+  publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
   paymentsEnforced: process.env.PAYMENTS_ENFORCED === "true",
   payoutAddress: process.env.PAYOUT_ADDRESS ?? "",
