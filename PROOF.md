@@ -12,6 +12,11 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Avatar: https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/15f5ea08-9f50-4c1b-a86b-bb91c97fdca9.png
   - Status: registered, NOT yet activated (listing review pending Phase 4 payments)
 
+- **Jul 6, 2026 — identity updated on-chain** (name + descriptions to reflect the full feature set)
+  - Name: OPTIC → **Optic AI**
+  - Tx: `0x626333f1833a491376685eb34be0de8d5624041e2b9c3a24374b010ce574a743`
+  - New description covers: cross-venue reads, edge/mispricing radar, smart-money tracking, rug radar, narrative timing, daily research-backed picks, on-chain-tracked record
+
 ## Deploy
 
 - **Jul 6, 2026 — production live on Railway**
