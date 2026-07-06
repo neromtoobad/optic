@@ -14,7 +14,9 @@ export const config = {
   cardsDir: process.env.CARDS_DIR ?? "./data/cards",
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
-  paymentsEnforced: process.env.PAYMENTS_ENFORCED === "true",
+  // Tolerant of casing/whitespace — "True", "TRUE", " true " must not silently
+  // leave a live paid endpoint serving free reads.
+  paymentsEnforced: (process.env.PAYMENTS_ENFORCED ?? "").trim().toLowerCase() === "true",
   payoutAddress: process.env.PAYOUT_ADDRESS ?? "",
   okx: {
     apiKey: process.env.OKX_API_KEY ?? "",

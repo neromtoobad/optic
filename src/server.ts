@@ -58,5 +58,11 @@ app.get("/v1/card/:id", async (c) => {
 });
 
 serve({ fetch: app.fetch, port: config.port }, (info) => {
-  console.log(`OPTIC listening on :${info.port} (payments ${config.paymentsEnforced ? "ENFORCED" : "off — stub"})`);
+  // Boot diagnostic: shows exactly what the container saw for the payment flag,
+  // so a misconfigured env is obvious in the deploy log (value is not a secret).
+  const raw = process.env.PAYMENTS_ENFORCED;
+  console.log(
+    `OPTIC listening on :${info.port} (payments ${config.paymentsEnforced ? "ENFORCED" : "off — stub"}) ` +
+      `[PAYMENTS_ENFORCED=${raw === undefined ? "<unset>" : JSON.stringify(raw)}, payout=${config.payoutAddress ? "set" : "MISSING"}]`
+  );
 });
