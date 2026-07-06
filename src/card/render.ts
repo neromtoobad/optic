@@ -230,7 +230,7 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
 
   <div style="display:flex;flex-direction:column;position:absolute;top:0;left:0;width:${W}px;height:${H}px;padding:58px 64px 48px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono';font-size:14px;letter-spacing:3px;color:${MUTE};">
-      <div style="display:flex;font-weight:600;letter-spacing:4px;color:${INK};">OPT<span style="color:${AMBER};">I</span>C</div>
+      <div style="display:flex;font-weight:600;letter-spacing:4px;color:${INK};">OPTIC A<span style="color:${AMBER};">I</span></div>
       <div style="display:flex;">${kicker.toUpperCase()} · ${dateLine().toUpperCase()}</div>
       <div style="display:flex;">OKX.AI</div>
     </div>
