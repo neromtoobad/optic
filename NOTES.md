@@ -47,6 +47,20 @@ Headers: `OK-ACCESS-KEY`, `OK-ACCESS-PASSPHRASE`, `OK-ACCESS-TIMESTAMP` (ISO),
 - Garbage queries fuzzy-match CLOSED markets → lens must filter `active && !closed` + volume floor (implemented)
 - Live World Cup 2026 + Fed rate markets confirmed — demo material
 
+## Venice card gate (Phase 0-D, decided Jul 6)
+- **DECISION: composite approach locked.** Venice background + code-composited text.
+  Pure-AI text (ideogram-v4, $0.06) mangled every number ("$$1;62612") and ignored
+  the 1200x672 frame — unusable for a stats product. Composite is pixel-sharp.
+- **Locked: model `z-image-turbo`, $0.01/card, ~4s.** Style prompt: "abstract dark
+  navy financial data landscape, luminous amber/cyan data streams diverging, subtle
+  grid horizon, no text" — divergence as the literal visual motif.
+- Composite layer: HTML/CSS template (fixtures/cards/card_template.html) — dark scrim
+  over bg, kicker, title, verdict line, divergence meter w/ score, three venue chips,
+  OPTIC · okx.ai mark. Phase 3 renders it headless (satori or browser).
+- Sample: fixtures/cards/sample_btc100k.png (built from REAL Jul 6 fixture data).
+- **COGS per read (all measured): OKX ~$0 (free quota) + Venice $0.01 + Anthropic
+  (est. $0.02–0.05) ≈ $0.03–0.06 — 5–10x under the $0.30 cap.**
+
 ## Still open (user-side)
 - [ ] ASP registration on okx.ai (listing review SLA question → Discord)
 - [ ] Venice card eyeball test (key present; Phase 0-D gate pending)

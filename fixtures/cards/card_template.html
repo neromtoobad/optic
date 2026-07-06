@@ -1,0 +1,46 @@
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .card {
+    width: 1200px; height: 672px; position: relative; overflow: hidden;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: #0a0e1a; color: #fff;
+  }
+  .card img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; }
+  .card .scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,9,20,.82) 0%, rgba(6,9,20,.25) 45%, rgba(6,9,20,.88) 100%); }
+  .inner { position: absolute; inset: 0; padding: 48px 56px; display: flex; flex-direction: column; }
+  .kicker { font-size: 15px; letter-spacing: .3em; color: #8b93a7; text-transform: uppercase; }
+  h1 { font-size: 54px; font-weight: 800; letter-spacing: -0.01em; margin-top: 10px; }
+  .verdict { font-size: 22px; color: #cdd3e0; margin-top: 12px; max-width: 900px; line-height: 1.35; }
+  .meter-wrap { margin-top: 34px; }
+  .meter-label { display: flex; justify-content: space-between; font-size: 14px; color: #8b93a7; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; max-width: 640px; }
+  .meter { width: 640px; height: 14px; border-radius: 7px; background: rgba(255,255,255,.10); position: relative; }
+  .meter .fill { width: 68%; height: 100%; border-radius: 7px; background: linear-gradient(90deg, #2dd4bf, #fbbf24 60%, #f97316); }
+  .meter .score { position: absolute; left: 68%; top: -34px; transform: translateX(-50%); font-size: 26px; font-weight: 800; color: #fbbf24; }
+  .chips { display: flex; gap: 18px; margin-top: auto; }
+  .chip { flex: 1; background: rgba(13,18,32,.78); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 18px 22px; backdrop-filter: blur(4px); }
+  .chip .lens { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #8b93a7; }
+  .chip .stat { font-size: 30px; font-weight: 800; margin-top: 6px; }
+  .chip .sub { font-size: 14px; color: #9aa1b5; margin-top: 4px; }
+  .chip.meme .stat { color: #2dd4bf; } .chip.pred .stat { color: #f97316; } .chip.attn .stat { color: #fbbf24; }
+  .brand { position: absolute; right: 56px; bottom: 30px; font-size: 16px; font-weight: 700; letter-spacing: .08em; color: #dfe4ee; }
+  .brand span { color: #8b93a7; font-weight: 500; }
+</style>
+<div class="card">
+  <img class="bg" src="card_b_bg.png">
+  <div class="scrim"></div>
+  <div class="inner">
+    <div class="kicker">Cross-venue read · Jul 6 2026</div>
+    <h1>Bitcoin $100K this month</h1>
+    <div class="verdict">Attention is crowded and bullish — but the outcome market prices the story at 0.2%. The crowd and the odds are not in the same room.</div>
+    <div class="meter-wrap">
+      <div class="meter-label"><span>Aligned</span><span>Divergence</span><span>Disconnect</span></div>
+      <div class="meter"><div class="fill"></div><div class="score">68</div></div>
+    </div>
+    <div class="chips">
+      <div class="chip meme"><div class="lens">Meme · onchain</div><div class="stat">$0.00042</div><div class="sub">liquidity flat · holders +2%</div></div>
+      <div class="chip pred"><div class="lens">Prediction · polymarket</div><div class="stat">0.2%</div><div class="sub">yes-price · $402K volume</div></div>
+      <div class="chip attn"><div class="lens">Attention · social</div><div class="stat">54.9</div><div class="sub">hotness · engagement +257%</div></div>
+    </div>
+  </div>
+  <div class="brand">OPTIC <span>· okx.ai</span></div>
+</div>
