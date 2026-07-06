@@ -20,6 +20,19 @@ app.get("/v1/health", (c) =>
   })
 );
 
+// Free, public track record — OPTIC's real hit rate on surfaced prediction reads,
+// scored as markets resolve on-chain. Lazily resolves any newly-closed markets first.
+app.get("/v1/track-record", async (c) => {
+  const { resolveOpenPicks, trackRecord } = await import("./track/picks.js");
+  await resolveOpenPicks().catch(() => {});
+  const r = trackRecord();
+  return c.json({
+    ...r,
+    note:
+      "OPTIC surfaces the market-favored outcome and records how those reads resolve. This is a calibration record, not a claim to beat the market. avg_implied_prob shows how favored the picks were.",
+  });
+});
+
 // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
 app.get("/v1/read", (c) => c.json({ error: "use POST" }, 405));
 

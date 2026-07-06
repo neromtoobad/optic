@@ -44,7 +44,7 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
     if (resolved.type === "scan") {
       verdict = { ...(await runScan(budget)), card_url: null };
     } else if (resolved.type === "daily") {
-      verdict = { ...(await runDaily(budget)), card_url: null };
+      verdict = { ...(await runDaily(budget, readId)), card_url: null };
     } else {
       // Each lens registers real per-call costs with the budget guard; any lens
       // may return null and the divergence engine treats absence as signal.
@@ -66,6 +66,23 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         news,
         budget
       );
+
+      // Log surfaced prediction markets to the track record (scored on resolution).
+      if (prediction?.markets?.length) {
+        const { logPicks } = await import("../track/picks.js");
+        logPicks(
+          readId,
+          prediction.markets
+            .filter((m) => m.url.includes("/market/"))
+            .map((m) => ({
+              category: "prediction" as const,
+              subject: resolved.name,
+              market_question: m.question,
+              market_slug: m.url.split("/market/")[1] ?? "",
+              yes_price: m.yes_price,
+            }))
+        );
+      }
 
       verdict = {
         query,

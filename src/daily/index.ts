@@ -48,8 +48,10 @@ Produce 4-7 tips, strongest signal first, spread across the desks when the data 
 - NEVER give trade instructions. BANNED words: buy, sell, long, short, ape, moon, and action verbs like enter, exit, play, fade, accumulate.
 - A thin or empty desk is fine — do not manufacture picks. Better fewer strong tips than filler.`;
 
+import { logPicks } from "../track/picks.js";
+
 /** Daily alpha: research the day's strongest signals into ranked, cited picks. */
-export async function runDaily(budget: BudgetGuard): Promise<Omit<DailyVerdict, "card_url" | "card_pending">> {
+export async function runDaily(budget: BudgetGuard, readId?: string): Promise<Omit<DailyVerdict, "card_url" | "card_pending">> {
   const [trending, rank1h, rank24h, fresh, unlocks] = await Promise.all([
     trendingMarkets(40),
     sentimentRanking("1", 20, budget),
@@ -68,7 +70,8 @@ export async function runDaily(budget: BudgetGuard): Promise<Omit<DailyVerdict, 
     .filter((m) => m.volume_24h > 100_000 && m.momentum >= 0.05)
     .sort((a, b) => b.momentum - a.momentum)
     .slice(0, 4);
-  const predictionInput = [...new Map([...byConviction, ...byMomentum].map((m) => [m.slug, m])).values()].map((m) => ({
+  const usedMarkets = [...new Map([...byConviction, ...byMomentum].map((m) => [m.slug, m])).values()];
+  const predictionInput = usedMarkets.map((m) => ({
     market: m.question,
     event: m.eventTitle,
     yes_pct: Math.round(m.yes_price * 1000) / 10,
@@ -76,6 +79,21 @@ export async function runDaily(budget: BudgetGuard): Promise<Omit<DailyVerdict, 
     volume_24h_usd: m.volume_24h,
     url: `https://polymarket.com/market/${m.slug}`,
   }));
+
+  // Log the surfaced prediction markets to the track record — scored when they
+  // resolve on Polymarket. Honest "accuracy" accrues here, unfaked.
+  if (readId) {
+    logPicks(
+      readId,
+      usedMarkets.map((m) => ({
+        category: "prediction" as const,
+        subject: m.eventTitle || m.question,
+        market_question: m.question,
+        market_slug: m.slug,
+        yes_price: m.yes_price,
+      }))
+    );
+  }
 
   // Meme momentum desk: 1h-vs-24h mention acceleration.
   const baseline = new Map<string, number>();
