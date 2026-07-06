@@ -16,6 +16,7 @@
     "meme": "tsx src/lenses/meme.ts",
     "predict": "tsx src/lenses/prediction.ts",
     "scan": "tsx src/scan/index.ts",
+    "daily": "tsx src/daily/index.ts",
     "unlocks": "tsx src/lenses/unlocks.ts",
     "card": "tsx src/card/render.ts"
   },

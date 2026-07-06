@@ -11,9 +11,9 @@ const CLASSIFY_SCHEMA = {
   properties: {
     kind: {
       type: "string",
-      enum: ["token_address", "ticker", "narrative", "scan"],
+      enum: ["token_address", "ticker", "narrative", "scan", "daily"],
       description:
-        "token_address: a blockchain contract address (base58 or 0x...). ticker: a token symbol or memecoin name (e.g. PEPE, doge, $WIF). narrative: a story, event or theme in plain words (e.g. 'fed rate cut', 'world cup', 'AI agents'). scan: a discovery request over the whole market rather than one subject (e.g. 'scan', 'what's heating up', 'new narratives', 'today's unlocks').",
+        "token_address: a blockchain contract address (base58 or 0x...). ticker: a token symbol or memecoin name (e.g. PEPE, doge, $WIF). narrative: a story, event or theme in plain words (e.g. 'fed rate cut', 'world cup', 'AI agents'). scan: a discovery request over the whole market (e.g. 'scan', 'what's heating up', 'new narratives'). daily: a request for today's picks/tips/alpha across markets (e.g. \"today's prediction tip\", \"picks of the day\", \"daily alpha\", \"what should I watch today\", \"give me tips\").",
     },
     cleaned: {
       type: "string",
@@ -29,10 +29,10 @@ function firstToken(data: Array<{ tokenInfos?: SearchToken[] } & SearchToken> | 
   return data[0].tokenInfos?.[0] ?? data[0];
 }
 
-export type ResolvedOrScan = Resolved | { type: "scan"; name: string };
+export type ResolvedOrScan = Resolved | { type: "scan"; name: string } | { type: "daily"; name: string };
 
 export async function resolve(query: string, budget: BudgetGuard): Promise<ResolvedOrScan> {
-  const cls = await structuredCall<{ kind: "token_address" | "ticker" | "narrative" | "scan"; cleaned: string }>({
+  const cls = await structuredCall<{ kind: "token_address" | "ticker" | "narrative" | "scan" | "daily"; cleaned: string }>({
     label: "resolve_classify",
     system:
       "You classify a crypto market query. Classify precisely; do not guess a ticker out of a phrase that reads as a story or event.",
@@ -45,6 +45,9 @@ export async function resolve(query: string, budget: BudgetGuard): Promise<Resol
 
   if (cls.kind === "scan") {
     return { type: "scan", name: "market scan" };
+  }
+  if (cls.kind === "daily") {
+    return { type: "daily", name: "daily alpha" };
   }
   if (cls.kind === "narrative") {
     return { type: "narrative", name: cls.cleaned };

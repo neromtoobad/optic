@@ -48,7 +48,7 @@ if (isCliEntry(import.meta.url)) {
   const { resolve } = await import("./resolve.js");
   const budget = new BudgetGuard();
   const resolved = await resolve(process.argv[2] ?? "pepe", budget);
-  if (resolved.type === "scan") throw new Error("use npm run scan for scan queries");
+  if (resolved.type === "scan" || resolved.type === "daily") throw new Error("use npm run scan/daily for discovery queries");
   const out = await memeLens.read(resolved, budget);
   console.log(JSON.stringify({ resolved, meme: out }, null, 2));
   console.log(`cost: $${budget.total().toFixed(5)}`);

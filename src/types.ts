@@ -99,6 +99,29 @@ export interface ScanVerdict {
   card_pending?: boolean;
 }
 
+// DAILY ALPHA mode — "what's today's prediction tip". Researches the strongest
+// signals across prediction markets + meme momentum + supply events, and returns
+// ranked, research-backed picks. Confidence is qualitative (signal strength), never
+// a claimed win rate. Every pick cites the numbers behind it.
+export interface DailyTip {
+  category: "prediction" | "meme_momentum" | "supply_risk";
+  headline: string; // the pick, in plain words
+  research: string; // the evidence: the concrete numbers behind it
+  confidence: "high" | "medium" | "watch"; // strength of the signal, NOT a win-rate
+  url?: string;
+}
+
+export interface DailyVerdict {
+  query: string;
+  resolved: { type: "daily"; name: string };
+  tips: DailyTip[];
+  research_note: string; // what was scanned to produce these
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
 import type { BudgetGuard } from "./pipeline/budget.js";
 
 // Lenses are adapters behind one interface. Any lens may return null —

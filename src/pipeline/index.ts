@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { ScanVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, ScanVerdict, Verdict } from "../types.js";
 import { resolve } from "../lenses/resolve.js";
 import { attentionLens } from "../lenses/attention.js";
 import { memeLens } from "../lenses/meme.js";
 import { predictionLens } from "../lenses/prediction.js";
 import { newsFor, unlockNewsFor } from "../lenses/unlocks.js";
 import { runScan } from "../scan/index.js";
+import { runDaily } from "../daily/index.js";
 import { computeDivergence } from "../engine/divergence.js";
 import { renderCard } from "../card/render.js";
 import { BudgetGuard } from "./budget.js";
@@ -13,7 +14,7 @@ import { db, insertRead, completeRead, failRead } from "../db.js";
 
 export interface PipelineResult {
   readId: string;
-  verdict: Verdict | ScanVerdict;
+  verdict: Verdict | ScanVerdict | DailyVerdict;
   costUsd: number;
 }
 
@@ -39,9 +40,11 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
     const resolved = await resolve(query, budget);
     mark("resolve");
 
-    let verdict: Verdict | ScanVerdict;
+    let verdict: Verdict | ScanVerdict | DailyVerdict;
     if (resolved.type === "scan") {
       verdict = { ...(await runScan(budget)), card_url: null };
+    } else if (resolved.type === "daily") {
+      verdict = { ...(await runDaily(budget)), card_url: null };
     } else {
       // Each lens registers real per-call costs with the budget guard; any lens
       // may return null and the divergence engine treats absence as signal.
