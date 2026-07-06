@@ -65,6 +65,17 @@ Headers: `OK-ACCESS-KEY`, `OK-ACCESS-PASSPHRASE`, `OK-ACCESS-TIMESTAMP` (ISO),
 - **COGS per read (all measured): OKX ~$0 (free quota) + Venice $0.01 + Anthropic
   (est. $0.02–0.05) ≈ $0.03–0.06 — 5–10x under the $0.30 cap.**
 
+## Card renderer (Phase 3, built Jul 6)
+- Production path: Venice z-image-turbo bg + satori (UI layer) + resvg (rasterize), 1200x672 PNG → data/cards/, served at GET /v1/card/:id (immutable cache headers)
+- **PERF TRAP: never give satori a large data-URI image — it parsed a 1.3MB PNG for ~85s.**
+  Fix: satori renders the UI on a transparent root; the bg <image> + base rect are string-injected
+  into the SVG afterward and resvg decodes them natively (~2.5s total composite)
+- satori also requires display:flex on EVERY div incl. empty ones (satori-html)
+- Fonts bundled in assets/fonts (woff, fontsource CDN): Space Grotesk 500/700, IBM Plex Mono 400/500/600 — glyph coverage is latin-only; no ▸ etc., draw markers as divs
+- Venice latency varies 4–30s → response waits max 15s then ships card_pending:true with the
+  final URL; render finishes in background and the endpoint serves the PNG when it lands
+- Card cost $0.01/read (registered with budget guard); scan cards get their own chip set
+
 ## Still open (user-side)
 - [ ] ASP registration on okx.ai (listing review SLA question → Discord)
 - [ ] Venice card eyeball test (key present; Phase 0-D gate pending)
