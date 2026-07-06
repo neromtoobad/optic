@@ -13,6 +13,17 @@ import { db } from "../db.js";
 // X Layer — zero gas, USDT settlement, same chain as OPTIC's ASP identity (#4380).
 const NETWORK = "eip155:196" as const;
 
+// The marketplace service lineup — each path is a distinct x402-gated service.
+// Cheap data services (~$0 cost) drive order volume; premium reads carry research/LLM cost.
+export const PAID_ROUTES: Array<{ path: string; price: number; description: string; mode?: import("../pipeline/index.js").ForceMode }> = [
+  { path: "/v1/read", price: 0.5, description: "Optic AI cross-venue market read: verdict JSON + shareable card" },
+  { path: "/v1/edge", price: 0.5, description: "Optic AI edge radar: today's mispriced markets, research vs price", mode: "edge" },
+  { path: "/v1/daily", price: 0.5, description: "Optic AI daily alpha: today's research-backed picks", mode: "daily" },
+  { path: "/v1/rug", price: 0.05, description: "Optic AI rug radar: token safety score + red flags", mode: "rug" },
+  { path: "/v1/smart-money", price: 0.05, description: "Optic AI smart money: tokens sharp wallets are accumulating", mode: "smartmoney" },
+  { path: "/v1/timing", price: 0.05, description: "Optic AI narrative timing: early vs late lifecycle for any token", mode: "timing" },
+];
+
 /** Header the read handler sets so settlement can attach the tx to the read row. */
 export const READ_ID_HEADER = "x-optic-read-id";
 
@@ -85,18 +96,16 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
   });
   const resourceServer = new x402ResourceServer(facilitator).register(NETWORK, new ExactEvmScheme());
   const routes: RoutesConfig = {
-    "POST /v1/read": {
-      accepts: [
+    ...Object.fromEntries(
+      PAID_ROUTES.map((r) => [
+        `POST ${r.path}`,
         {
-          scheme: "exact",
-          network: NETWORK,
-          payTo: config.payoutAddress,
-          price: `$${config.priceUsdt}`,
+          accepts: [{ scheme: "exact", network: NETWORK, payTo: config.payoutAddress, price: `$${r.price}` }],
+          description: r.description,
+          mimeType: "application/json",
         },
-      ],
-      description: "OPTIC cross-venue market read: verdict JSON + shareable card",
-      mimeType: "application/json",
-    },
+      ])
+    ),
   };
   const httpServer = new x402HTTPResourceServer(resourceServer, routes);
 

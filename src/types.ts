@@ -146,6 +146,28 @@ export interface EdgeVerdict {
   card_pending?: boolean;
 }
 
+// RUG RADAR service — standalone token safety score.
+export interface RugVerdict {
+  query: string;
+  resolved: Resolved;
+  risk: import("./lenses/risk.js").RiskRadar | null;
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
+// TIMING service — standalone narrative lifecycle stage.
+export interface TimingVerdict {
+  query: string;
+  resolved: Resolved;
+  timing: import("./lenses/timing.js").Timing | null;
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
 // SMART MONEY mode — what sharp wallets are accumulating (discovery).
 export interface SmartMoneyVerdict {
   query: string;

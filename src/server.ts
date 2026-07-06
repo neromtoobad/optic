@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
-import { createX402Middleware, READ_ID_HEADER } from "./payments/x402.js";
+import { createX402Middleware, READ_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
+import type { ForceMode } from "./pipeline/index.js";
 import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
 
@@ -33,36 +34,50 @@ app.get("/v1/track-record", async (c) => {
   });
 });
 
-// Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
-app.get("/v1/read", (c) => c.json({ error: "use POST" }, 405));
+// One x402 middleware guards every paid route (per-route pricing in PAID_ROUTES).
+const paymentMiddleware = createX402Middleware();
 
-app.post("/v1/read", createX402Middleware(), async (c) => {
-  let body: { query?: unknown; chain?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid JSON body" }, 400);
-  }
+// Modes that need a query param (a token/subject); discovery modes ignore the body.
+const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing"]);
 
-  const query = typeof body.query === "string" ? body.query.trim() : "";
-  if (!query) return c.json({ error: "query is required" }, 400);
-  if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
+for (const route of PAID_ROUTES) {
+  const mode = route.mode; // undefined = full cross-venue read
+  const needsQuery = NEEDS_QUERY.has(mode ?? "read");
 
-  try {
-    const { readId, verdict, costUsd } = await runRead(query);
-    console.log(`read ${readId} complete — cost $${costUsd.toFixed(4)}`);
-    // settlement middleware reads this header to attach the tx hash, then strips it
-    c.header(READ_ID_HEADER, readId);
-    return c.json(verdict);
-  } catch (err) {
-    if (err instanceof BudgetExceededError) {
-      console.error(`read failed on budget: ${err.message}`);
-      return c.json({ error: "read exceeded cost budget and was aborted; you were not charged" }, 503);
+  // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
+  app.get(route.path, (c) => c.json({ error: "use POST" }, 405));
+
+  app.post(route.path, paymentMiddleware, async (c) => {
+    let query = "";
+    if (needsQuery) {
+      let body: { query?: unknown };
+      try {
+        body = await c.req.json();
+      } catch {
+        return c.json({ error: "invalid JSON body" }, 400);
+      }
+      query = typeof body.query === "string" ? body.query.trim() : "";
+      if (!query) return c.json({ error: "query is required (a token address, ticker, or subject)" }, 400);
+      if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
+    } else {
+      query = mode ?? "read";
     }
-    console.error("read failed:", err);
-    return c.json({ error: "read failed" }, 500);
-  }
-});
+
+    try {
+      const { readId, verdict, costUsd } = await runRead(query, mode ? { forceMode: mode } : {});
+      console.log(`${route.path} ${readId} complete — cost $${costUsd.toFixed(4)}`);
+      c.header(READ_ID_HEADER, readId); // settlement middleware attaches tx hash, then strips it
+      return c.json(verdict);
+    } catch (err) {
+      if (err instanceof BudgetExceededError) {
+        console.error(`${route.path} failed on budget: ${err.message}`);
+        return c.json({ error: "read exceeded cost budget and was aborted; you were not charged" }, 503);
+      }
+      console.error(`${route.path} failed:`, err);
+      return c.json({ error: "read failed" }, 500);
+    }
+  });
+}
 
 app.get("/v1/card/:id", async (c) => {
   const id = c.req.param("id");
