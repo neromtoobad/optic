@@ -16,10 +16,16 @@ const KEYWORDS_SCHEMA = {
       type: "array",
       items: { type: "string" },
       description:
-        "0-4 search keywords for finding prediction markets about the OUTCOME this subject's story depends on (e.g. for a Trump memecoin: 'trump'; for a rate-cut narrative: 'fed rate'). Short, concrete, no cashtags. EMPTY ARRAY when the subject is a niche token with no plausible real-world outcome market — a wrong match is worse than none.",
+        "0-4 search keywords for finding prediction markets about this subject. Include the MOST SPECIFIC named entities first (team names, people, tickers, place names) — e.g. 'spain vs portugal' → ['spain', 'portugal']; 'trump memecoin' → ['trump']; 'fed rate cut' → ['fed rate']. Do NOT generalise a specific matchup up to its tournament (never turn 'spain vs portugal' into 'world cup'). Short, concrete, no cashtags. EMPTY ARRAY only when the subject is a niche token with no plausible real-world outcome market.",
+    },
+    entities: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "The specific named entities the user is asking about, lowercased (e.g. ['spain','portugal'], ['trump'], ['bitcoin']). Used to rank markets by how directly they price the named subject. Empty if the query names no specific entity.",
     },
   },
-  required: ["keywords"],
+  required: ["keywords", "entities"],
   additionalProperties: false,
 } as const;
 
@@ -61,14 +67,14 @@ export const predictionLens: Lens<PredictionVenue> = {
   name: "prediction",
   async read(resolved: Resolved, budget: BudgetGuard): Promise<PredictionVenue | null> {
     const subject = resolved.type === "token" ? `token ${resolved.name}` : resolved.name;
-    const { keywords } = await structuredCall<{ keywords: string[] }>({
+    const { keywords, entities } = await structuredCall<{ keywords: string[]; entities: string[] }>({
       label: "prediction_keywords",
       system:
-        "Extract prediction-market search keywords for a crypto subject. Only propose keywords for outcomes a real prediction market would plausibly list (elections, sports, macro, majors like BTC/ETH, big public figures). For a niche memecoin with no real-world event behind it, return an empty list.",
+        "Extract prediction-market search terms for a subject. Keep the specific named entities (teams, people, places, tickers) — never generalise a specific matchup up to its umbrella event. Only propose terms for outcomes a real prediction market would plausibly list (elections, sports, macro, majors like BTC/ETH, big public figures). For a niche memecoin with no real-world event behind it, return empty arrays.",
       user: subject,
       schema: KEYWORDS_SCHEMA as unknown as Record<string, unknown>,
       budget,
-      maxTokens: 150,
+      maxTokens: 200,
       effort: "low",
     });
 
@@ -77,7 +83,10 @@ export const predictionLens: Lens<PredictionVenue> = {
     // merge, dedupe — the open+volume filter below does the real selection.
     if (keywords.length === 0) return null;
 
-    const queries = [...new Set([keywords.join(" "), ...keywords])].slice(0, 4);
+    // Search each entity/keyword individually AND the joined phrase — a per-entity
+    // search ("spain", "portugal") surfaces the match event that a joined-only
+    // search can miss.
+    const queries = [...new Set([keywords.join(" "), ...entities, ...keywords].filter(Boolean))].slice(0, 5);
     const results = await Promise.all(queries.map(searchGamma));
     const seen = new Set<string>();
     const events = results
@@ -91,24 +100,42 @@ export const predictionLens: Lens<PredictionVenue> = {
       });
     if (events.length === 0) return null;
 
-    const terms = keywords.flatMap((k) => k.toLowerCase().split(/\s+/)).filter((t) => t.length > 3);
-    const markets = events
-      .filter((e) => {
-        const hay = (e.title ?? "").toLowerCase();
-        return terms.some((t) => hay.includes(t)) || (e.markets ?? []).some((m) => terms.some((t) => (m.question ?? "").toLowerCase().includes(t)));
+    // Ranking: RELEVANCE before volume. A market that prices the exact entities the
+    // user named (e.g. both "spain" AND "portugal" in a match market) must beat a
+    // giant but tangential market (e.g. "USA win the World Cup"). Volume-only sort
+    // buries the specific fixture under tournament markets — the Spain/Portugal bug.
+    const ents = entities.map((e) => e.toLowerCase()).filter(Boolean);
+    const terms = keywords.flatMap((k) => k.toLowerCase().split(/\s+/)).filter((t) => t.length > 2);
+    const matchTerms = ents.length > 0 ? ents : terms;
+
+    // score = # of distinct named entities the market (its own question + parent
+    // event title) references. Skew-related zero-volume novelty markets ("will the
+    // announcer say X") are filtered by the volume floor.
+    const scored = events
+      .flatMap((e) => (e.markets ?? []).map((m) => ({ m, eventTitle: (e.title ?? "").toLowerCase() })))
+      .filter(({ m }) => m.active && !m.closed && (m.volumeNum ?? 0) >= VOLUME_FLOOR)
+      .map(({ m, eventTitle }) => {
+        const hay = `${eventTitle} ${(m.question ?? "").toLowerCase()}`;
+        const relevance = matchTerms.filter((t) => hay.includes(t)).length;
+        return { m, relevance, volume: m.volumeNum ?? 0 };
       })
-      .flatMap((e) => e.markets ?? [])
-      .filter((m) => m.active && !m.closed && (m.volumeNum ?? 0) >= VOLUME_FLOOR)
-      .sort((a, b) => (b.volumeNum ?? 0) - (a.volumeNum ?? 0))
-      .slice(0, 4)
-      .map((m) => ({
-        question: m.question ?? "",
-        venue: "polymarket",
-        yes_price: Number(JSON.parse(m.outcomePrices ?? "[0]")[0] ?? 0),
-        yes_chg_24h: typeof m.oneDayPriceChange === "number" ? Math.round(m.oneDayPriceChange * 1000) / 1000 : null,
-        volume: Math.round(m.volumeNum ?? 0),
-        url: `https://polymarket.com/market/${m.slug ?? ""}`,
-      }));
+      .filter((s) => s.relevance > 0)
+      // most named-entities matched first; volume only as the tiebreaker
+      .sort((a, b) => b.relevance - a.relevance || b.volume - a.volume);
+
+    // If the top market prices a specific matchup (relevance ≥2 = both teams), keep
+    // only that tier — don't dilute a clean head-to-head read with tournament odds.
+    const topRelevance = scored[0]?.relevance ?? 0;
+    const pool = topRelevance >= 2 ? scored.filter((s) => s.relevance >= 2) : scored;
+
+    const markets = pool.slice(0, 5).map(({ m }) => ({
+      question: m.question ?? "",
+      venue: "polymarket",
+      yes_price: Number(JSON.parse(m.outcomePrices ?? "[0]")[0] ?? 0),
+      yes_chg_24h: typeof m.oneDayPriceChange === "number" ? Math.round(m.oneDayPriceChange * 1000) / 1000 : null,
+      volume: Math.round(m.volumeNum ?? 0),
+      url: `https://polymarket.com/market/${m.slug ?? ""}`,
+    }));
 
     return markets.length > 0 ? { markets } : null;
   },
