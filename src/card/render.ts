@@ -1,23 +1,267 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import satori from "satori";
+import { html } from "satori-html";
+import { Resvg } from "@resvg/resvg-js";
 import type { ScanVerdict, Verdict } from "../types.js";
-import { mockDelay, isCliEntry } from "../fixtures.js";
+import { generateBackground } from "./venice.js";
+import { BudgetGuard } from "../pipeline/budget.js";
 import { config } from "../config.js";
+import { isCliEntry } from "../fixtures.js";
 
 export interface CardResult {
   card_url: string;
   pending: boolean;
 }
 
-// MOCK (Phase 1). Phase 3: Venice background in the locked style + composited
-// text/stats (satori or node-canvas), 1200x675 PNG, saved to the volume.
-// Runs in parallel with verdict assembly; card never blocks the verdict.
-export async function renderCard(readId: string, _verdict: Verdict | ScanVerdict): Promise<CardResult> {
-  await mockDelay();
+const W = 1200;
+const H = 672;
+const CARDS_DIR = "./data/cards";
+
+const AMBER = "#f5a623";
+const INK = "#e8ebf2";
+const MUTE = "#6d7688";
+const SUB = "#8a93a6";
+
+const font = (f: string) => readFileSync(join(process.cwd(), "assets/fonts", f));
+const FONTS = [
+  { name: "Space Grotesk", data: font("sg-500.woff"), weight: 500 as const, style: "normal" as const },
+  { name: "Space Grotesk", data: font("sg-700.woff"), weight: 700 as const, style: "normal" as const },
+  { name: "IBM Plex Mono", data: font("ipm-400.woff"), weight: 400 as const, style: "normal" as const },
+  { name: "IBM Plex Mono", data: font("ipm-500.woff"), weight: 500 as const, style: "normal" as const },
+  { name: "IBM Plex Mono", data: font("ipm-600.woff"), weight: 600 as const, style: "normal" as const },
+];
+
+// ── formatting ────────────────────────────────────────────────────────
+
+const fmtPrice = (n: number | null): string => {
+  if (n === null) return "—";
+  if (n >= 1000) return `$${Math.round(n).toLocaleString("en-US")}`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.01) return `$${n.toFixed(4)}`;
+  return `$${n.toPrecision(2).replace(/e-?\d+$/, (m) => m)}`;
+};
+
+const fmtUsd = (n: number | null): string => {
+  if (n === null) return "—";
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+  return `$${Math.round(n)}`;
+};
+
+const fmtPct = (n: number | null, signed = false): string =>
+  n === null ? "—" : `${signed && n > 0 ? "+" : ""}${Math.round(n * 10) / 10}%`;
+
+const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const trunc = (s: string, max: number): string => (s.length <= max ? s : s.slice(0, max - 1).trimEnd() + "…");
+
+const title = (v: Verdict | ScanVerdict): string => {
+  if (v.resolved.type === "scan") return "Market scan";
+  const name = v.resolved.name;
+  return trunc(name.length <= 3 ? name.toUpperCase() : name[0].toUpperCase() + name.slice(1), 40);
+};
+
+const dateLine = (): string =>
+  new Date()
+    .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    .toLowerCase();
+
+// ── chips ─────────────────────────────────────────────────────────────
+
+interface Chip {
+  lens: string;
+  stat: string;
+  color: string;
+  sub: string;
+}
+
+function verdictChips(v: Verdict): Chip[] {
+  const meme = v.venues.meme;
+  const pred = v.venues.prediction;
+  const att = v.attention;
+  const topMarket = pred?.markets?.[0];
+  return [
+    {
+      lens: "meme · onchain",
+      stat: meme ? fmtPrice(meme.price) : "asleep",
+      color: "#4be3c3",
+      sub: meme
+        ? `${fmtPct(meme.chg_24h, true)} 24h · liq ${fmtUsd(meme.liquidity)}`
+        : "no onchain venue for this story",
+    },
+    {
+      lens: "prediction · polymarket",
+      stat: topMarket ? fmtPct(topMarket.yes_price * 100) : "unhedged",
+      color: "#ff8a3d",
+      sub: topMarket
+        ? `yes-price · ${fmtUsd(topMarket.volume)} vol · ${pred!.markets.length} mkt${pred!.markets.length > 1 ? "s" : ""}`
+        : "no outcome market prices this",
+    },
+    {
+      lens: "attention · social",
+      stat: att?.hotness !== null && att !== null ? String(att.hotness) : "quiet",
+      color: "#f5c944",
+      sub: att
+        ? `hotness · ${att.mentions_24h ?? 0} mentions · ${att.trend}`
+        : "no social read on this subject",
+    },
+  ];
+}
+
+function scanChips(v: ScanVerdict): Chip[] {
+  const top = v.scan.rising[0];
+  const fresh = v.scan.fresh_trenches[0];
+  const unlock = v.scan.unlock_calendar[0];
+  return [
+    {
+      lens: "rising · social",
+      stat: top ? `${top.symbol} ${top.accel_x ?? "?"}x` : "quiet",
+      color: "#f5c944",
+      sub: top ? `${top.mentions_1h ?? 0}/1h vs ${top.mentions_24h ?? 0}/24h` : "no accelerating narratives",
+    },
+    {
+      lens: "fresh · trenches",
+      stat: fresh ? fresh.symbol : "quiet",
+      color: "#4be3c3",
+      sub: fresh
+        ? `${fmtUsd(fresh.volume_1h_usd)} 1h vol · ${fmtUsd(fresh.market_cap_usd)} mcap`
+        : "no fresh launches with volume",
+    },
+    {
+      lens: "unlocks · supply",
+      stat: unlock ? "scheduled" : "clear",
+      color: "#ff8a3d",
+      sub: unlock ? trunc(unlock.title, 44) : "no major unlocks flagged",
+    },
+  ];
+}
+
+// ── template ──────────────────────────────────────────────────────────
+
+function template(v: Verdict | ScanVerdict): ReturnType<typeof html> {
+  const isScan = v.resolved.type === "scan";
+  const score = isScan ? null : (v as Verdict).divergence.score;
+  const direction = isScan ? null : (v as Verdict).divergence.direction.replace(/_/g, " ");
+  const ticksOn = score === null ? 0 : Math.round(score / 10);
+  const chips = isScan ? scanChips(v as ScanVerdict) : verdictChips(v as Verdict);
+  const kicker = isScan ? "market scan · discovery read" : "cross-venue read";
+  const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
+
+  const ret = (pos: string) =>
+    `<div style="display:flex;position:absolute;width:26px;height:26px;${pos}border-color:rgba(232,235,242,.5);border-style:solid;"></div>`;
+
+  // NOTE: no background image here — satori is pathologically slow parsing large
+  // data-URI images (~85s). The Venice bg is injected into the SVG post-satori
+  // and rasterized by resvg (native decoder). Root stays transparent.
+  return html(`<div style="display:flex;flex-direction:column;width:${W}px;height:${H}px;font-family:'Space Grotesk';position:relative;color:${INK};">
+  <div style="display:flex;position:absolute;top:0;left:0;width:${W}px;height:${H}px;background-image:radial-gradient(circle at 30% 40%, rgba(5,7,13,.92) 0%, rgba(5,7,13,.55) 55%, rgba(5,7,13,.25) 100%);"></div>
+  ${ret("top:26px;left:26px;border-width:1.5px 0 0 1.5px;")}
+  ${ret("top:26px;right:26px;border-width:1.5px 1.5px 0 0;")}
+  ${ret("bottom:26px;left:26px;border-width:0 0 1.5px 1.5px;")}
+  ${ret("bottom:26px;right:26px;border-width:0 1.5px 1.5px 0;")}
+
+  <div style="display:flex;flex-direction:column;position:absolute;top:0;left:0;width:${W}px;height:${H}px;padding:58px 64px 48px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono';font-size:14px;letter-spacing:3px;color:${MUTE};">
+      <div style="display:flex;font-weight:600;letter-spacing:4px;color:${INK};">OPT<span style="color:${AMBER};">I</span>C</div>
+      <div style="display:flex;">${kicker.toUpperCase()} · ${dateLine().toUpperCase()}</div>
+      <div style="display:flex;">OKX.AI</div>
+    </div>
+
+    <div style="display:flex;margin-top:44px;">
+      <div style="display:flex;flex-direction:column;flex:1;padding-right:40px;">
+        <div style="display:flex;font-size:56px;line-height:1.05;font-weight:700;letter-spacing:-1px;">${esc(title(v))}</div>
+        <div style="display:flex;margin-top:20px;font-size:20px;line-height:1.5;color:#aab2c2;max-width:560px;">${esc(trunc(v.verdict_line, 170))}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;width:300px;align-items:flex-end;">
+        ${
+          isScan
+            ? `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">TOP ACCELERATION</div>
+               <div style="display:flex;align-items:baseline;margin-top:8px;">
+                 <div style="display:flex;font-size:110px;line-height:0.95;font-weight:700;letter-spacing:-4px;color:${AMBER};">${scanTop?.accel_x ?? "—"}</div>
+                 <div style="display:flex;font-size:40px;color:${MUTE};font-weight:500;">x</div>
+               </div>
+               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(scanTop ? `$${scanTop.symbol} mention rate vs 24h` : "no signal")}</div>`
+            : `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">DIVERGENCE</div>
+               <div style="display:flex;align-items:baseline;margin-top:8px;">
+                 <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${AMBER};">${score}</div>
+                 <div style="display:flex;font-size:42px;color:${MUTE};font-weight:500;">/100</div>
+               </div>
+               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(direction ?? "")}</div>
+               <div style="display:flex;margin-top:16px;">
+                 ${Array.from({ length: 10 }, (_, i) => `<div style="display:flex;width:14px;height:5px;margin-left:5px;background-color:${i < ticksOn ? AMBER : "rgba(255,255,255,.14)"};"></div>`).join("")}
+               </div>`
+        }
+      </div>
+    </div>
+
+    <div style="display:flex;margin-top:auto;border-top:1px solid rgba(255,255,255,.14);">
+      ${chips
+        .map(
+          (c, i) => `
+        <div style="display:flex;flex-direction:column;flex:1;padding:22px ${i < 2 ? "36px" : "0"} 0 ${i > 0 ? "36px" : "0"};${i > 0 ? "border-left:1px solid rgba(255,255,255,.14);" : ""}">
+          <div style="display:flex;align-items:center;font-family:'IBM Plex Mono';font-size:12px;letter-spacing:3px;color:${MUTE};"><div style="display:flex;width:7px;height:7px;margin-right:10px;background-color:${AMBER};"></div>${esc(c.lens.toUpperCase())}</div>
+          <div style="display:flex;font-family:'IBM Plex Mono';font-size:32px;font-weight:600;margin-top:8px;color:${c.color};">${esc(c.stat)}</div>
+          <div style="display:flex;font-size:14px;color:${SUB};margin-top:5px;">${esc(c.sub)}</div>
+        </div>`
+        )
+        .join("")}
+    </div>
+  </div>
+</div>`);
+}
+
+// ── renderer ──────────────────────────────────────────────────────────
+
+/**
+ * Phase 3 renderer: Venice background (locked style) + satori/resvg composite.
+ * Venice failure degrades to the dark base + vignette — card always renders.
+ */
+export async function renderCard(
+  readId: string,
+  verdict: Verdict | ScanVerdict,
+  budget: BudgetGuard
+): Promise<CardResult> {
+  const t0 = Date.now();
+  const mark = (s: string) => console.error(`  [card ${readId.slice(0, 8)}] ${s} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+  const bg = await generateBackground(budget);
+  mark("venice");
+
+  const svg = await satori(template(verdict) as Parameters<typeof satori>[0], {
+    width: W,
+    height: H,
+    fonts: FONTS,
+  });
+  mark("satori");
+
+  // Inject base + Venice bg under satori's (transparent-rooted) UI layer; resvg
+  // decodes the raster natively — this is what keeps render time in seconds.
+  const underlay =
+    `<rect width="${W}" height="${H}" fill="#05070d"/>` +
+    (bg
+      ? `<image href="data:image/png;base64,${bg.toString("base64")}" width="${W}" height="${H}" opacity="0.75" preserveAspectRatio="xMidYMid slice"/>`
+      : "");
+  const composed = svg.replace(/(<svg[^>]*>)/, `$1${underlay}`);
+  const png = new Resvg(composed, { fitTo: { mode: "width", value: W } }).render().asPng();
+  mark("resvg");
+
+  mkdirSync(CARDS_DIR, { recursive: true });
+  writeFileSync(join(CARDS_DIR, `${readId}.png`), png);
   return { card_url: `${config.publicBaseUrl}/v1/card/${readId}`, pending: false };
 }
 
+export function cardPath(readId: string): string | null {
+  const p = join(CARDS_DIR, `${readId}.png`);
+  return existsSync(p) ? p : null;
+}
+
 if (isCliEntry(import.meta.url)) {
-  const path = process.argv[2] ?? "./fixtures/verdict.json";
-  const verdict = JSON.parse(readFileSync(path, "utf8")) as Verdict;
-  renderCard("cli-test", verdict).then((r) => console.log(JSON.stringify(r, null, 2)));
+  const arg = process.argv[2] ?? "./fixtures/verdict.json";
+  const verdict = JSON.parse(readFileSync(arg, "utf8")) as Verdict;
+  const budget = new BudgetGuard();
+  const out = await renderCard("cli-test", verdict, budget);
+  console.log(JSON.stringify(out, null, 2));
+  console.log(`saved: ${cardPath("cli-test")} — cost $${budget.total().toFixed(4)}`);
 }

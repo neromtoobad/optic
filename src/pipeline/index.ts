@@ -17,7 +17,9 @@ export interface PipelineResult {
   costUsd: number;
 }
 
-const CARD_TIMEOUT_MS = 45_000;
+// Max time the response waits on the card; past this the card finishes in the
+// background and card_pending:true ships with a URL that will start serving.
+const CARD_TIMEOUT_MS = 15_000;
 
 /**
  * The one engine: narrative → attention → per-venue read → divergence → verdict + card.
@@ -30,8 +32,12 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
   insertRead(readId, query);
   const budget = new BudgetGuard();
 
+  const t0 = Date.now();
+  const mark = (stage: string) => console.error(`  [${readId.slice(0, 8)}] ${stage} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
   try {
     const resolved = await resolve(query, budget);
+    mark("resolve");
 
     let verdict: Verdict | ScanVerdict;
     if (resolved.type === "scan") {
@@ -46,6 +52,7 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         unlockNewsFor(resolved, budget),
         newsFor(resolved, budget),
       ]);
+      mark("lenses");
 
       const { divergence, verdict_line } = await computeDivergence(
         resolved,
@@ -69,16 +76,30 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
       };
     }
 
-    // Card in parallel with response assembly; if slow, ship card_pending:true.
+    mark("verdict");
+
+    // Card must never block the verdict: give it a short window, then ship
+    // card_pending and let the render finish in the background — GET /v1/card/:id
+    // serves the PNG the moment it lands on disk.
+    const cardPromise = renderCard(readId, verdict, budget)
+      .then((card) => {
+        db.prepare("UPDATE reads SET card_url = ? WHERE id = ?").run(card.card_url, readId);
+        mark("card done");
+        return card;
+      })
+      .catch((err) => {
+        console.error(`card render failed for ${readId}: ${err}`);
+        return null;
+      });
     const card = await Promise.race([
-      renderCard(readId, verdict),
+      cardPromise,
       new Promise<null>((r) => setTimeout(() => r(null), CARD_TIMEOUT_MS)),
     ]);
     if (card) {
       verdict.card_url = card.card_url;
     } else {
       verdict.card_pending = true;
-      verdict.card_url = null;
+      verdict.card_url = `${(await import("../config.js")).config.publicBaseUrl}/v1/card/${readId}`;
     }
 
     completeRead(readId, verdict.resolved, verdict, verdict.card_url, budget.total());

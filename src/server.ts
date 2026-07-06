@@ -39,11 +39,20 @@ app.post("/v1/read", x402Middleware, async (c) => {
   }
 });
 
-app.get("/v1/card/:id", (c) => {
-  const read = getRead(c.req.param("id"));
+app.get("/v1/card/:id", async (c) => {
+  const id = c.req.param("id");
+  const { cardPath } = await import("./card/render.js");
+  const path = cardPath(id);
+  if (path) {
+    const { readFileSync } = await import("node:fs");
+    return c.body(new Uint8Array(readFileSync(path)), 200, {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+  }
+  const read = getRead(id);
   if (!read) return c.json({ error: "not found" }, 404);
-  // Phase 3: serve the rendered PNG from the volume. Phase 1: report status.
-  return c.json({ id: read.id, status: read.status, card_url: read.card_url });
+  return c.json({ id: read.id, status: read.status, card_pending: true });
 });
 
 serve({ fetch: app.fetch, port: config.port }, (info) => {

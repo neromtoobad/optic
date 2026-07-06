@@ -22,9 +22,12 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
     "@hono/node-server": "^1.13.7",
+    "@resvg/resvg-js": "^2.6.2",
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
-    "hono": "^4.6.16"
+    "hono": "^4.6.16",
+    "satori": "^0.26.0",
+    "satori-html": "^0.3.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
