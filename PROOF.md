@@ -17,6 +17,10 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Tx: `0x626333f1833a491376685eb34be0de8d5624041e2b9c3a24374b010ce574a743`
   - New description covers: cross-venue reads, edge/mispricing radar, smart-money tracking, rug radar, narrative timing, daily research-backed picks, on-chain-tracked record
 
+- **Jul 6, 2026 — submitted for OKX marketplace review** (activated #4380)
+  - approvalStatus moved to under-review; onlineStatus online. Review result within 24h (email + agent window).
+  - This starts the eligibility clock (Phase 5 hard gate, ahead of Jul 12).
+
 ## Deploy
 
 - **Jul 6, 2026 — production live on Railway**
