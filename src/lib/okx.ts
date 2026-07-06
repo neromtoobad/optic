@@ -242,6 +242,57 @@ export function memeTokenList(stage: "NEW" | "MIGRATING" | "MIGRATED", size: num
   );
 }
 
+export function clusterOverview(chainIndex: string, tokenContractAddress: string, budget?: BudgetGuard) {
+  return call<{
+    clusterConcentration?: string;
+    holderNewAddressPercent?: string;
+    holderSameCreationTimePercent?: string;
+    holderSameFundSourcePercent?: string;
+    rugPullPercent?: string;
+    top100HoldingsPercent?: string;
+  }>(
+    "cluster_overview",
+    `/api/v6/dex/market/token/cluster/overview?chainIndex=${chainIndex}&tokenContractAddress=${tokenContractAddress}`,
+    { tier: "premium", budget }
+  );
+}
+
+export function advancedInfo(chainIndex: string, tokenContractAddress: string, budget?: BudgetGuard) {
+  return call<{
+    bundleHoldingPercent?: string;
+    devHoldingPercent?: string;
+    devCreateTokenCount?: string;
+    devLaunchedTokenCount?: string;
+    devRugPullTokenCount?: string;
+    lpBurnedPercent?: string;
+    riskControlLevel?: string;
+    tokenTags?: string[];
+  }>(
+    "advanced_info",
+    `/api/v6/dex/market/token/advanced-info?chainIndex=${chainIndex}&tokenContractAddress=${tokenContractAddress}`,
+    { tier: "premium", budget }
+  );
+}
+
+export interface SignalTx {
+  token?: { symbol?: string; name?: string; tokenAddress?: string; marketCapUsd?: string; holders?: string; top10HolderPercent?: string };
+  amountUsd?: string;
+  price?: string;
+  timestamp?: string;
+  triggerWalletCount?: string; // how many smart wallets triggered this buy signal
+  chainIndex?: string;
+}
+
+/** Smart-money BUY-signal feed (POST). Tokens sharp wallets are accumulating. */
+export function smartMoneySignals(chainIndex: string, budget?: BudgetGuard) {
+  return call<SignalTx[]>("signal_list", `/api/v6/dex/market/signal/list`, {
+    tier: "premium",
+    budget,
+    method: "POST",
+    body: { chainIndex },
+  });
+}
+
 export const num = (s: string | number | undefined | null): number | null => {
   if (s === undefined || s === null || s === "") return null;
   const n = Number(s);

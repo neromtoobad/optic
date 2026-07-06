@@ -17,6 +17,10 @@
     "predict": "tsx src/lenses/prediction.ts",
     "scan": "tsx src/scan/index.ts",
     "daily": "tsx src/daily/index.ts",
+    "edge": "tsx src/edge/index.ts",
+    "risk": "tsx src/lenses/risk.ts",
+    "timing": "tsx src/lenses/timing.ts",
+    "smartmoney": "tsx src/lenses/smartmoney.ts",
     "resolve-picks": "tsx scripts/resolve-picks.ts",
     "unlocks": "tsx src/lenses/unlocks.ts",
     "card": "tsx src/card/render.ts"

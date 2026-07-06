@@ -51,6 +51,9 @@ const SYSTEM = `You are OPTIC's divergence engine. You compare how three venues 
 - UNLOCK NEWS (supply events): news items about scheduled unlocks/vesting for this token — report dates and sizes as facts; scheduled supply expansion is context the other venues may or may not be pricing
 - NEWS (research headlines for narratives): the reported facts behind the story — compare what the news says against what the odds price; a market whose odds moved against fresh news IS a divergence
 - RESEARCH (web-sourced context — the value-add): recent form, injuries, roster/lineup news, weather, catalysts for the subject. This is the WHY behind the market read. When research is present, your job is to EXPLAIN the odds with it and flag where the research adds nuance the raw number misses (e.g. "favourite is missing two starters — the underdog price may be softer than it looks"). Cite specific researched facts. This is what makes the read worth paying for — do not ignore it when present.
+- TOKEN_RISK (Rug Radar, tokens only): a 0-100 safety score + red flags (dev rug history, holder concentration, LP status). When present and elevated, surface the top flags — a trader must see these. Factual risk disclosure, never advice.
+- NARRATIVE_TIMING (tokens only): lifecycle stage — igniting/building/peaking/cooling. Say whether the attention is early or late.
+- SMART_MONEY (tokens only): sharp-wallet accumulation (wallet count + buy volume). When present, note that smart money is active on this token — factual flow, never a trade instruction.
 
 Rules — non-negotiable:
 - Divergence between venues IS the signal. Score it with the rubric in the schema.
@@ -70,6 +73,11 @@ export async function computeDivergence(
   unlockNews: UnlockNews[] | null,
   news: UnlockNews[] | null,
   research: Research | null,
+  tokenAlpha: {
+    risk: import("../lenses/risk.js").RiskRadar | null;
+    timing: import("../lenses/timing.js").Timing | null;
+    smartMoney: import("../lenses/smartmoney.js").SmartMoneyToken | null;
+  },
   budget: BudgetGuard
 ): Promise<DivergenceResult> {
   const input = JSON.stringify({
@@ -77,6 +85,9 @@ export async function computeDivergence(
     attention,
     venues: { meme, prediction, unlock_news: unlockNews, news },
     research: research?.brief ?? null,
+    token_risk: tokenAlpha.risk ? { score: tokenAlpha.risk.score, level: tokenAlpha.risk.level, flags: tokenAlpha.risk.flags } : null,
+    narrative_timing: tokenAlpha.timing ? { stage: tokenAlpha.timing.stage, read: tokenAlpha.timing.read } : null,
+    smart_money: tokenAlpha.smartMoney ? { wallets: tokenAlpha.smartMoney.wallets, buy_usd: Math.round(tokenAlpha.smartMoney.buy_usd) } : null,
   });
 
   let feedback = "";

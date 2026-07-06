@@ -1,11 +1,15 @@
 import { randomUUID } from "node:crypto";
-import type { DailyVerdict, ScanVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, EdgeVerdict, ScanVerdict, SmartMoneyVerdict, Verdict } from "../types.js";
 import { resolve } from "../lenses/resolve.js";
 import { attentionLens } from "../lenses/attention.js";
 import { memeLens } from "../lenses/meme.js";
 import { predictionLens } from "../lenses/prediction.js";
 import { newsFor, unlockNewsFor } from "../lenses/unlocks.js";
 import { researchFor } from "../lenses/research.js";
+import { riskRadar } from "../lenses/risk.js";
+import { narrativeTiming } from "../lenses/timing.js";
+import { smartMoneyForToken, smartMoneyFlow } from "../lenses/smartmoney.js";
+import { runEdge } from "../edge/index.js";
 import { runScan } from "../scan/index.js";
 import { runDaily } from "../daily/index.js";
 import { computeDivergence } from "../engine/divergence.js";
@@ -15,7 +19,7 @@ import { db, insertRead, completeRead, failRead } from "../db.js";
 
 export interface PipelineResult {
   readId: string;
-  verdict: Verdict | ScanVerdict | DailyVerdict;
+  verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict;
   costUsd: number;
 }
 
@@ -41,21 +45,39 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
     const resolved = await resolve(query, budget);
     mark("resolve");
 
-    let verdict: Verdict | ScanVerdict | DailyVerdict;
+    let verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict;
     if (resolved.type === "scan") {
       verdict = { ...(await runScan(budget)), card_url: null };
     } else if (resolved.type === "daily") {
       verdict = { ...(await runDaily(budget, readId)), card_url: null };
+    } else if (resolved.type === "edge") {
+      verdict = { ...(await runEdge(budget, readId)), card_url: null };
+    } else if (resolved.type === "smartmoney") {
+      const flow = (await smartMoneyFlow("501", budget)) ?? [];
+      const top = flow[0];
+      verdict = {
+        query,
+        resolved: { type: "smartmoney", name: "smart money" },
+        flow,
+        verdict_line: top
+          ? `Smart money is loading ${top.symbol}: ${top.wallets} wallets, $${Math.round(top.buy_usd).toLocaleString()} bought at $${top.market_cap_usd ? Math.round(top.market_cap_usd / 1000) + "K" : "?"} mcap.`
+          : "No clear smart-money accumulation signal right now.",
+        generated_at: new Date().toISOString(),
+        card_url: null,
+      };
     } else {
       // Each lens registers real per-call costs with the budget guard; any lens
       // may return null and the divergence engine treats absence as signal.
-      const [attention, meme, prediction, unlockNews, news, research] = await Promise.all([
+      const [attention, meme, prediction, unlockNews, news, research, risk, timing, smartMoney] = await Promise.all([
         attentionLens.read(resolved, budget),
         memeLens.read(resolved, budget),
         predictionLens.read(resolved, budget),
         unlockNewsFor(resolved, budget),
         newsFor(resolved, budget),
         researchFor(resolved, budget),
+        riskRadar(resolved, budget),
+        narrativeTiming(resolved, budget),
+        smartMoneyForToken(resolved, budget),
       ]);
       mark("lenses");
 
@@ -67,6 +89,7 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         unlockNews,
         news,
         research,
+        { risk, timing, smartMoney },
         budget
       );
 
@@ -93,6 +116,9 @@ export async function runRead(query: string, paidTx?: string): Promise<PipelineR
         attention,
         venues: { meme, prediction, unlock_news: unlockNews, news },
         research,
+        risk,
+        timing,
+        smart_money: smartMoney,
         divergence,
         verdict_line,
         generated_at: new Date().toISOString(),

@@ -3,8 +3,10 @@ import { join } from "node:path";
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
-import type { DailyVerdict, ScanVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, EdgeVerdict, ScanVerdict, SmartMoneyVerdict, Verdict } from "../types.js";
 import { generateBackground } from "./venice.js";
+
+type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict;
 import { BudgetGuard } from "../pipeline/budget.js";
 import { config } from "../config.js";
 import { isCliEntry } from "../fixtures.js";
@@ -57,9 +59,11 @@ const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;"
 
 const trunc = (s: string, max: number): string => (s.length <= max ? s : s.slice(0, max - 1).trimEnd() + "…");
 
-const title = (v: Verdict | ScanVerdict | DailyVerdict): string => {
+const title = (v: AnyVerdict): string => {
   if (v.resolved.type === "scan") return "Market scan";
   if (v.resolved.type === "daily") return "Today's alpha";
+  if (v.resolved.type === "edge") return "Edge radar";
+  if (v.resolved.type === "smartmoney") return "Smart money";
   const name = v.resolved.name;
   return trunc(name.length <= 3 ? name.toUpperCase() : name[0].toUpperCase() + name.slice(1), 40);
 };
@@ -155,19 +159,61 @@ function dailyChips(v: DailyVerdict): Chip[] {
   }));
 }
 
+function edgeChips(v: EdgeVerdict): Chip[] {
+  return v.edges.slice(0, 3).map((e) => ({
+    lens: `edge ${e.edge_score}/100`,
+    stat: trunc(e.market_price, 26),
+    color: e.edge_score >= 50 ? "#ff8a3d" : "#f5c944",
+    sub: trunc(e.read, 46),
+  }));
+}
+
+function smartChips(v: SmartMoneyVerdict): Chip[] {
+  return v.flow.slice(0, 3).map((t) => ({
+    lens: `${t.wallets} wallets`,
+    stat: trunc(t.symbol, 14),
+    color: "#4be3c3",
+    sub: `${fmtUsd(t.buy_usd)} bought · ${t.market_cap_usd ? fmtUsd(t.market_cap_usd) : "?"} mcap`,
+  }));
+}
+
 // ── template ──────────────────────────────────────────────────────────
 
-function template(v: Verdict | ScanVerdict | DailyVerdict): ReturnType<typeof html> {
+function template(v: AnyVerdict): ReturnType<typeof html> {
   const isScan = v.resolved.type === "scan";
   const isDaily = v.resolved.type === "daily";
-  const isVerdict = !isScan && !isDaily;
+  const isEdge = v.resolved.type === "edge";
+  const isSmart = v.resolved.type === "smartmoney";
+  const isVerdict = !isScan && !isDaily && !isEdge && !isSmart;
   const score = isVerdict ? (v as Verdict).divergence.score : null;
   const direction = isVerdict ? (v as Verdict).divergence.direction.replace(/_/g, " ") : null;
   const ticksOn = score === null ? 0 : Math.round(score / 10);
-  const chips = isScan ? scanChips(v as ScanVerdict) : isDaily ? dailyChips(v as DailyVerdict) : verdictChips(v as Verdict);
-  const kicker = isScan ? "market scan · discovery read" : isDaily ? "daily alpha · picks of the day" : "cross-venue read";
+  const chips = isScan
+    ? scanChips(v as ScanVerdict)
+    : isDaily
+      ? dailyChips(v as DailyVerdict)
+      : isEdge
+        ? edgeChips(v as EdgeVerdict)
+        : isSmart
+          ? smartChips(v as SmartMoneyVerdict)
+          : verdictChips(v as Verdict);
+  const kicker = isScan
+    ? "market scan · discovery read"
+    : isDaily
+      ? "daily alpha · picks of the day"
+      : isEdge
+        ? "edge radar · mispricing scan"
+        : isSmart
+          ? "smart money · accumulation"
+          : "cross-venue read";
   const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
-  const tipCount = isDaily ? (v as DailyVerdict).tips.length : null;
+  const tipCount = isDaily
+    ? (v as DailyVerdict).tips.length
+    : isEdge
+      ? (v as EdgeVerdict).edges.length
+      : isSmart
+        ? (v as SmartMoneyVerdict).flow.length
+        : null;
 
   const ret = (pos: string) =>
     `<div style="display:flex;position:absolute;width:26px;height:26px;${pos}border-color:rgba(232,235,242,.5);border-style:solid;"></div>`;
@@ -196,12 +242,12 @@ function template(v: Verdict | ScanVerdict | DailyVerdict): ReturnType<typeof ht
       </div>
       <div style="display:flex;flex-direction:column;width:300px;align-items:flex-end;">
         ${
-          isDaily
-            ? `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">PICKS TODAY</div>
+          isDaily || isEdge || isSmart
+            ? `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">${isEdge ? "EDGES" : isSmart ? "TOKENS" : "PICKS TODAY"}</div>
                <div style="display:flex;align-items:baseline;margin-top:8px;">
                  <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${AMBER};">${tipCount ?? "—"}</div>
                </div>
-               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">research-backed calls</div>`
+               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${isEdge ? "potential mispricings" : isSmart ? "under accumulation" : "research-backed calls"}</div>`
             : isScan
             ? `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">TOP ACCELERATION</div>
                <div style="display:flex;align-items:baseline;margin-top:8px;">
@@ -246,7 +292,7 @@ function template(v: Verdict | ScanVerdict | DailyVerdict): ReturnType<typeof ht
  */
 export async function renderCard(
   readId: string,
-  verdict: Verdict | ScanVerdict | DailyVerdict,
+  verdict: AnyVerdict,
   budget: BudgetGuard
 ): Promise<CardResult> {
   const t0 = Date.now();

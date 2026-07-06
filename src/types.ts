@@ -68,6 +68,10 @@ export interface Verdict {
     news: UnlockNews[] | null; // research headlines for narrative subjects (sports, macro, events)
   };
   research: Research | null; // the value-add: web research behind the market read
+  // Token-only alpha lenses (null for narratives):
+  risk: import("./lenses/risk.js").RiskRadar | null; // Rug Radar safety score
+  timing: import("./lenses/timing.js").Timing | null; // narrative lifecycle stage
+  smart_money: import("./lenses/smartmoney.js").SmartMoneyToken | null; // smart-money activity on this token
   divergence: Divergence;
   verdict_line: string;
   generated_at: string;
@@ -124,6 +128,29 @@ export interface DailyVerdict {
   tips: DailyTip[];
   research: { brief: string; sources: string[] } | null; // web research behind the top call
   research_note: string; // what was scanned to produce these
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
+// EDGE mode — the mispricing radar (where research diverges from price).
+export interface EdgeVerdict {
+  query: string;
+  resolved: { type: "edge"; name: string };
+  edges: Array<{ market: string; market_price: string; read: string; why: string; edge_score: number; url: string }>;
+  verdict_line: string;
+  research_note: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
+// SMART MONEY mode — what sharp wallets are accumulating (discovery).
+export interface SmartMoneyVerdict {
+  query: string;
+  resolved: { type: "smartmoney"; name: string };
+  flow: Array<{ symbol: string; address: string; buy_usd: number; signals: number; wallets: number; market_cap_usd: number | null; top10_holder_pct: number | null }>;
   verdict_line: string;
   generated_at: string;
   card_url: string | null;
