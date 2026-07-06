@@ -23,6 +23,8 @@ Lenses are data adapters, not features. v1 ships FOUR lenses + a discovery mode:
 
 SCAN mode (query classified as "scan", e.g. "what's heating up"): discovery read over the whole market — 1h-vs-24h mention acceleration ranking (early narrative radar), fresh trenches launches with real volume, and the unlock calendar. Same price, same endpoint, ScanVerdict shape.
 
+DAILY ALPHA mode (query classified as "daily", e.g. "what's today's prediction tip", "picks of the day"): researches the day's strongest signals across three desks — prediction movers (Polymarket trending: highest conviction×volume + biggest 24h odds moves), meme momentum (mention acceleration + fresh launches), supply risk (scheduled unlocks) — and returns ranked, research-backed picks. DailyVerdict shape. CONFIDENCE is signal strength (volume/conviction/corroboration), NEVER a claimed win rate. Honest "accuracy" = thorough research now + a tracked pick record over time (roadmap), never a fabricated percentage. Same price, same endpoint.
+
 Positioning (user-directed, Jul 6): OPTIC sells "the research behind winning picks" — sports odds + movement + news, early narrative detection, supply-event warnings — always as data, never as picks. No success-rate or earnings claims anywhere; that framing is what passes OKX review (the eligibility gate).
 
 NFT and fan-token lenses are ROADMAP, not v1. Do not build them. The product identity is all-in-one from day one because the engine genuinely is one thing; the lenses arrive in order.
