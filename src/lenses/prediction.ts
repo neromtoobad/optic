@@ -24,8 +24,13 @@ const KEYWORDS_SCHEMA = {
       description:
         "The specific named entities the user is asking about, lowercased (e.g. ['spain','portugal'], ['trump'], ['bitcoin']). Used to rank markets by how directly they price the named subject. Empty if the query names no specific entity.",
     },
+    winner_query: {
+      type: "boolean",
+      description:
+        "TRUE when the user is asking who will WIN a multi-outcome contest with many possible winners — 'who wins the world cup', 'who will be the nominee', 'f1 champion', 'super bowl winner'. FALSE for a head-to-head ('spain vs portugal'), a yes/no ('will bitcoin hit 100k'), or a token/narrative.",
+    },
   },
-  required: ["keywords", "entities"],
+  required: ["keywords", "entities", "winner_query"],
   additionalProperties: false,
 } as const;
 
@@ -61,13 +66,54 @@ async function searchGamma(query: string): Promise<GammaEvent[] | null> {
   }
 }
 
+function toMarket(m: NonNullable<GammaEvent["markets"]>[number]) {
+  return {
+    question: m.question ?? "",
+    venue: "polymarket",
+    yes_price: Number(JSON.parse(m.outcomePrices ?? "[0]")[0] ?? 0),
+    yes_chg_24h: typeof m.oneDayPriceChange === "number" ? Math.round(m.oneDayPriceChange * 1000) / 1000 : null,
+    volume: Math.round(m.volumeNum ?? 0),
+    url: `https://polymarket.com/market/${m.slug ?? ""}`,
+  };
+}
+
+/**
+ * "Who wins X" path: find Polymarket's grouped WINNER event (many "Will [entrant]
+ * win the [contest]" markets) and rank entrants by probability — so the answer
+ * leads with the actual favourite, not a high-volume longshot.
+ */
+async function winnerMarkets(searchPhrase: string, subjectTerms: string[]): Promise<PredictionVenue | null> {
+  const events = await searchGamma(searchPhrase);
+  if (!events) return null;
+  // Pick the event that is most clearly a multi-entrant winner market and matches
+  // the subject: count active "... win the ..." markets whose text hits a subject term.
+  let best: { markets: NonNullable<GammaEvent["markets"]>; score: number } | null = null;
+  for (const e of events) {
+    const title = (e.title ?? "").toLowerCase();
+    const winnerish = (e.markets ?? []).filter(
+      (m) => m.active && !m.closed && /\bwin the\b/i.test(m.question ?? "") && (m.volumeNum ?? 0) >= VOLUME_FLOOR
+    );
+    if (winnerish.length < 4) continue;
+    const matches = subjectTerms.length === 0 || subjectTerms.some((t) => title.includes(t) || winnerish.some((m) => (m.question ?? "").toLowerCase().includes(t)));
+    if (!matches) continue;
+    if (!best || winnerish.length > best.score) best = { markets: winnerish, score: winnerish.length };
+  }
+  if (!best) return null;
+  const markets = best.markets
+    .slice()
+    .sort((a, b) => Number(JSON.parse(b.outcomePrices ?? "[0]")[0] ?? 0) - Number(JSON.parse(a.outcomePrices ?? "[0]")[0] ?? 0))
+    .slice(0, 6)
+    .map(toMarket);
+  return markets.length > 0 ? { markets } : null;
+}
+
 // PREDICTION lens — how outcome markets price the related story (Polymarket
 // public read API; free, no auth). Honest null when nothing relevant matches.
 export const predictionLens: Lens<PredictionVenue> = {
   name: "prediction",
   async read(resolved: Resolved, budget: BudgetGuard): Promise<PredictionVenue | null> {
     const subject = resolved.type === "token" ? `token ${resolved.name}` : resolved.name;
-    const { keywords, entities } = await structuredCall<{ keywords: string[]; entities: string[] }>({
+    const { keywords, entities, winner_query } = await structuredCall<{ keywords: string[]; entities: string[]; winner_query: boolean }>({
       label: "prediction_keywords",
       system:
         "Extract prediction-market search terms for a subject. Keep the specific named entities (teams, people, places, tickers) — never generalise a specific matchup up to its umbrella event. Only propose terms for outcomes a real prediction market would plausibly list (elections, sports, macro, majors like BTC/ETH, big public figures). For a niche memecoin with no real-world event behind it, return empty arrays.",
@@ -82,6 +128,15 @@ export const predictionLens: Lens<PredictionVenue> = {
     // broad terms surface live ones. Search the joined phrase AND each keyword,
     // merge, dedupe — the open+volume filter below does the real selection.
     if (keywords.length === 0) return null;
+
+    const subjectTerms = [...entities, ...keywords].map((t) => t.toLowerCase()).filter((t) => t.length > 2);
+
+    // "Who wins X" → dedicated winner-event path (favourite-first). Fall through to
+    // the general path if no clean winner event is found.
+    if (winner_query) {
+      const winner = await winnerMarkets(`${keywords.join(" ")} winner`, subjectTerms);
+      if (winner) return winner;
+    }
 
     // Search each entity/keyword individually AND the joined phrase — a per-entity
     // search ("spain", "portugal") surfaces the match event that a joined-only
@@ -117,11 +172,14 @@ export const predictionLens: Lens<PredictionVenue> = {
       .map(({ m, eventTitle }) => {
         const hay = `${eventTitle} ${(m.question ?? "").toLowerCase()}`;
         const relevance = matchTerms.filter((t) => hay.includes(t)).length;
-        return { m, relevance, volume: m.volumeNum ?? 0 };
+        const yesPrice = Number(JSON.parse(m.outcomePrices ?? "[0]")[0] ?? 0);
+        return { m, relevance, yesPrice, volume: m.volumeNum ?? 0 };
       })
       .filter((s) => s.relevance > 0)
-      // most named-entities matched first; volume only as the tiebreaker
-      .sort((a, b) => b.relevance - a.relevance || b.volume - a.volume);
+      // Rank: relevance → then the market's own PROBABILITY (favourites first) →
+      // then volume. Probability-before-volume is what makes "who wins X" surface
+      // the actual favourite instead of the biggest-volume longshot.
+      .sort((a, b) => b.relevance - a.relevance || b.yesPrice - a.yesPrice || b.volume - a.volume);
 
     // If the top market prices a specific matchup (relevance ≥2 = both teams), keep
     // only that tier — don't dilute a clean head-to-head read with tournament odds.
