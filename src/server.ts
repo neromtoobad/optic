@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
-import { x402Middleware } from "./payments/x402.js";
+import { createX402Middleware, READ_ID_HEADER } from "./payments/x402.js";
 import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
 
@@ -13,7 +13,7 @@ app.get("/v1/health", (c) => c.json({ ok: true, service: "optic", ts: new Date()
 // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
 app.get("/v1/read", (c) => c.json({ error: "use POST" }, 405));
 
-app.post("/v1/read", x402Middleware, async (c) => {
+app.post("/v1/read", createX402Middleware(), async (c) => {
   let body: { query?: unknown; chain?: unknown };
   try {
     body = await c.req.json();
@@ -26,8 +26,10 @@ app.post("/v1/read", x402Middleware, async (c) => {
   if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
 
   try {
-    const { readId, verdict, costUsd } = await runRead(query, c.get("paidTx"));
+    const { readId, verdict, costUsd } = await runRead(query);
     console.log(`read ${readId} complete — cost $${costUsd.toFixed(4)}`);
+    // settlement middleware reads this header to attach the tx hash, then strips it
+    c.header(READ_ID_HEADER, readId);
     return c.json(verdict);
   } catch (err) {
     if (err instanceof BudgetExceededError) {
