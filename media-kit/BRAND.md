@@ -19,6 +19,7 @@ The mark is a lens reading two rays that **diverge from a shared origin** — on
 ## Social
 
 - **X / Twitter header** (1500×500) — [`social/optic-x-header.svg`](social/optic-x-header.svg) · [`.png`](social/optic-x-header.png)
+- **Card-montage teaser** (~15s, 1280×720 MP4) — [`optic-teaser.mp4`](optic-teaser.mp4) · poster [`optic-teaser-poster.png`](optic-teaser-poster.png). Logo reveal → all 7 cards → outro. Silent, loop-friendly, X-native.
 
 ## Card samples
 
@@ -80,4 +81,7 @@ Observational, never advice. Optic reports the map — *priced-in, lagging, dive
 ```
 npx tsx media-kit/build.ts        # logo, avatar, X header
 npx tsx scripts/demo-cards.ts     # the 7 service cards
+npx tsx media-kit/teaser.ts       # render teaser frames → /tmp/teaser-frames
+ffmpeg -y -framerate 30 -i /tmp/teaser-frames/f%04d.png -c:v libx264 -pix_fmt yuv420p -crf 18 media-kit/optic-teaser.mp4
+python3 media-kit/build-page.py   # the shareable media-kit page
 ```
