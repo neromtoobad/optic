@@ -85,3 +85,17 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Settlement unaffected — buyers' `payment pay` auto-selects `exact`: verified live, tx
     `0x5437eea57030ebf75c6433fc2e6786e6e841924ba5c37fa09e6a2aba644404ab` (success:true).
   - Status after fix: **"Listing under review"**, x402 verification passing. Awaiting review email.
+
+- **Jul 7, 2026 — added a 7th service: Stocks Desk (OKX tokenized equities)**
+  - OKX lists tokenized US equities (xStocks: TSLAx/AAPLx/NVDAx on Solana + Eth). New `/v1/stocks` (0.5 USDT)
+    reads the on-chain xStock price alongside Venice equity research (price, earnings, analyst consensus,
+    catalysts) + any Polymarket market on the company → cross-venue divergence. Strictly observational
+    (consensus reported as attributed data, never buy/sell/hold — securities compliance).
+  - Live-tested: NVDA → tokenized NVDAx $194.16 vs research close $195.55, Strong Buy consensus ~$299–309,
+    divergence 38 "research ahead of price". Cost $0.033/read. Inherits the x402 dual-scheme fix (valid).
+  - Service registration tx: 0x8c4896baecaeed21f9f84cf0365f333f596159ae2b8a6e62d0b9c8e1e33381ec
+  - LISTING GATE learned: each `serviceDescription` must be 2 parts on separate lines — ① summary (≤200
+    display width) · ② input requirements ("Provide: …", ≤200) — NO disclaimers/links/tech-stack. A too-long
+    or disclaimer-laden summary → `[D1] missing sections` / `[D3] summary exceeds …`. Only the changed
+    service is re-checked (originals grandfathered). After fix (summary width 189): activate rejectReason null.
+  - Status: all **7 services** live, **"Listing under review"**, x402 + description checks passing.
