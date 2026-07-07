@@ -74,6 +74,60 @@ function instructionsToResponse(response: {
   return new Response(JSON.stringify(response.body ?? {}), { status: response.status, headers });
 }
 
+// USDT0 on X Layer is a 6-decimal token. The OKX task-system validator resolves
+// a service's price by reading `decimals` off each accepts entry; USDT0's address
+// (0x779ded…) is not in its by-address USDT/USDG token registry, so without an
+// explicit `decimals` it reports "cannot determine token decimals" and the
+// marketplace review rejects the listing as not payment-integrated. The x402
+// SDK omits `decimals`, so we inject it into the emitted 402 challenge here. This
+// is metadata only — the buyer signs EIP-3009 over from/to/value/nonce, never
+// `decimals`, so settlement is unaffected (proven the same asset settles live).
+const SETTLEMENT_DECIMALS = 6;
+
+function injectAssetDecimals(response: {
+  status: number;
+  headers: Record<string, string>;
+  body?: unknown;
+  isHtml?: boolean;
+}): typeof response {
+  const headers = { ...response.headers };
+  const patchAccepts = (obj: unknown): boolean => {
+    if (!obj || typeof obj !== "object") return false;
+    const accepts = (obj as { accepts?: unknown }).accepts;
+    if (!Array.isArray(accepts)) return false;
+    for (const a of accepts) {
+      if (a && typeof a === "object") {
+        const entry = a as Record<string, unknown>;
+        if (entry.decimals === undefined) entry.decimals = SETTLEMENT_DECIMALS;
+        if (entry.extra && typeof entry.extra === "object") {
+          const extra = entry.extra as Record<string, unknown>;
+          if (extra.decimals === undefined) extra.decimals = SETTLEMENT_DECIMALS;
+        }
+      }
+    }
+    return true;
+  };
+
+  // The challenge rides in the base64 PAYMENT-REQUIRED header (and, defensively,
+  // the JSON body if a server variant echoes it there).
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === "payment-required") {
+      try {
+        const decoded = JSON.parse(Buffer.from(headers[key], "base64").toString("utf8"));
+        if (patchAccepts(decoded)) headers[key] = Buffer.from(JSON.stringify(decoded)).toString("base64");
+      } catch {
+        /* leave the header untouched if it isn't decodable JSON */
+      }
+    }
+  }
+  let body = response.body;
+  if (body && typeof body === "object") {
+    const clone = JSON.parse(JSON.stringify(body));
+    if (patchAccepts(clone)) body = clone;
+  }
+  return { ...response, headers, body };
+}
+
 /**
  * Real x402 seller middleware (Phase 4), ported from @okxweb3/x402-express to
  * Hono. Unpaid POSTs get the 402 PAYMENT-REQUIRED challenge; signed requests
@@ -159,7 +213,7 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
 
     if (result.type === "no-payment-required") return next();
     if (result.type === "payment-error") {
-      c.res = instructionsToResponse(result.response);
+      c.res = instructionsToResponse(injectAssetDecimals(result.response));
       return;
     }
 
