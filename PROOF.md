@@ -64,3 +64,13 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Verified: `x402-check` now returns `valid:true, amountHuman:0.5` (read) and `0.05` (rug); real 0.05
     settlement still succeeds — tx `0x873a8d94e6f6d80f5da15ad55ed736b97f55e21ebf945e97b1c840c87dd0cbb8`
     (success:true). Fix commit cde0b9e, deployed to production.
+
+- **Jul 7, 2026 — RESUBMITTED for review (fix in place)**
+  - Resubmit path: OKX.AI has no web resubmit UI (fully agent-driven); the "Agent conversation interface"
+    is the onchainos agent CLI. `agent activate` alone won't resubmit a rejected listing; the working path
+    is `agent update --service '[…operation:update on all 6…]'` (re-runs endpoint QA on the fixed 402) then
+    `agent activate`. The activate response's `success:false` is a red herring (the on-chain status toggle
+    no-ops because the agent is already online); submit-approval still lands.
+  - On-chain update tx: 0x3484bae85a021389bf0ef39f08bd3898a348f9efff68a68df6efcbd97ee4e1a4 (SUCCESS)
+  - Owner-facing status (`agent get-my-agents`): approvalDisplayStatus 2 — **"Listing under review"**. Review
+    result within ~24h (email to dimejikeji5@gmail.com).
