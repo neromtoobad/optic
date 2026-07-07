@@ -38,7 +38,7 @@ app.get("/v1/track-record", async (c) => {
 const paymentMiddleware = createX402Middleware();
 
 // Modes that need a query param (a token/subject); discovery modes ignore the body.
-const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing"]);
+const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing", "stocks"]);
 
 for (const route of PAID_ROUTES) {
   const mode = route.mode; // undefined = full cross-venue read

@@ -179,6 +179,43 @@ export interface SmartMoneyVerdict {
   card_pending?: boolean;
 }
 
+// STOCKS lens — OKX-native tokenized equities (xStocks) read as one venue in a
+// cross-venue picture: on-chain xStock price vs real-world equity research vs any
+// prediction market on the company. Data and analysis only, never advice — a
+// stock is a security, so language stays observational (priced-in, lagging,
+// diverging), never buy/sell/hold or a price target framed as a recommendation.
+export interface StockTokenized {
+  symbol: string; // e.g. TSLAx
+  chain: string; // chainIndex (501 solana, 1 eth)
+  address: string;
+  price: number | null;
+  chg_24h: number | null;
+  liquidity: number | null;
+  holders: number | null;
+}
+
+export interface StockRead {
+  ticker: string;
+  company: string;
+  tokenized: StockTokenized | null; // OKX-listed xStock, if any
+  market_snapshot: string | null; // reported real-world price/level + recent move (from research)
+  analyst_consensus: string | null; // reported sell-side consensus rating/target — data, attributed, not our call
+  catalysts: string[]; // upcoming/recent catalysts (earnings, guidance, macro)
+  divergence: Divergence; // where the venues diverge on the same company
+}
+
+export interface StockVerdict {
+  query: string;
+  resolved: { type: "stock"; name: string };
+  stock: StockRead | null;
+  prediction: PredictionVenue | null; // Polymarket markets on the company, if any
+  research: Research | null; // the equity research brief + sources
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
 import type { BudgetGuard } from "./pipeline/budget.js";
 
 // Lenses are adapters behind one interface. Any lens may return null —

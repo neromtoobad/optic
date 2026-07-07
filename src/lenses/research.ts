@@ -33,7 +33,23 @@ Search the web for the most recent, decision-relevant facts. Prioritise, as appl
 Write a tight briefing (max ~160 words) of only the concrete, sourced facts that would move a prediction. No filler, no restating the question, no betting advice — just the research. If little relevant is found, say so in one line.`;
 }
 
-async function veniceResearch(subject: string, budget: BudgetGuard): Promise<ResearchBrief | null> {
+// STOCK research prompt — the equity analogue: price, move, earnings, the analyst
+// consensus (reported as data), and catalysts. Strictly factual/observational; a
+// stock is a security, so no recommendation, no "should buy/sell", no price target
+// framed as advice — just the sourced facts and where they sit vs the market.
+function stockPrompt(subject: string): string {
+  return `You are an equity research analyst preparing a factual briefing on the stock: "${subject}".
+
+Search the web for the most recent, decision-relevant facts. Report, as available:
+- current share price and recent move (today / past week)
+- most recent earnings result vs expectations, and the next earnings date
+- the current sell-side analyst CONSENSUS rating and average price target (report these as data — attribute them, do not endorse them)
+- any fresh catalyst or news in the last few days (product, guidance, regulatory, macro)
+
+Write a tight briefing (max ~160 words) of only concrete, sourced facts. No filler, no restating the question, and NO investment advice or recommendation of any kind — just the research. If little relevant is found, say so in one line.`;
+}
+
+async function veniceResearch(promptText: string, budget: BudgetGuard): Promise<ResearchBrief | null> {
   if (!config.veniceApiKey) return null;
   const res = await fetch("https://api.venice.ai/api/v1/chat/completions", {
     method: "POST",
@@ -48,7 +64,7 @@ async function veniceResearch(subject: string, budget: BudgetGuard): Promise<Res
         disable_thinking: true,
         strip_thinking_response: true,
       },
-      messages: [{ role: "user", content: prompt(subject) }],
+      messages: [{ role: "user", content: promptText }],
       max_tokens: 1000,
     }),
     signal: AbortSignal.timeout(75_000),
@@ -85,12 +101,28 @@ export async function researchSubject(subject: string, budget: BudgetGuard): Pro
   const cached = cacheGet<ResearchBrief>(key);
   if (cached !== undefined) return cached;
   try {
-    const out = await veniceResearch(subject, budget);
+    const out = await veniceResearch(prompt(subject), budget);
     if (out) cacheSet(key, out);
     return out;
   } catch (err) {
     console.error(`research: ${err}`);
     return null; // research is additive — never fail the read on it
+  }
+}
+
+/** Equity research for the stocks lens (separate cache namespace + prompt). */
+export async function researchStock(subject: string, budget: BudgetGuard): Promise<ResearchBrief | null> {
+  if (!subject.trim()) return null;
+  const key = cacheKey("research:stock", subject.toLowerCase());
+  const cached = cacheGet<ResearchBrief>(key);
+  if (cached !== undefined) return cached;
+  try {
+    const out = await veniceResearch(stockPrompt(subject), budget);
+    if (out) cacheSet(key, out);
+    return out;
+  } catch (err) {
+    console.error(`stock research: ${err}`);
+    return null;
   }
 }
 

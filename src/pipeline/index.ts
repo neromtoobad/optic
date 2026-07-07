@@ -9,6 +9,7 @@ import { researchFor } from "../lenses/research.js";
 import { riskRadar } from "../lenses/risk.js";
 import { narrativeTiming } from "../lenses/timing.js";
 import { smartMoneyForToken, smartMoneyFlow } from "../lenses/smartmoney.js";
+import { stockRead } from "../lenses/stocks.js";
 import { runEdge } from "../edge/index.js";
 import { runScan } from "../scan/index.js";
 import { runDaily } from "../daily/index.js";
@@ -17,13 +18,13 @@ import { renderCard } from "../card/render.js";
 import { BudgetGuard } from "./budget.js";
 import { db, insertRead, completeRead, failRead } from "../db.js";
 
-import type { RugVerdict, TimingVerdict } from "../types.js";
+import type { RugVerdict, TimingVerdict, StockVerdict } from "../types.js";
 
-export type ForceMode = "edge" | "daily" | "smartmoney" | "rug" | "timing";
+export type ForceMode = "edge" | "daily" | "smartmoney" | "rug" | "timing" | "stocks";
 
 export interface PipelineResult {
   readId: string;
-  verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | RugVerdict | TimingVerdict;
+  verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | RugVerdict | TimingVerdict | StockVerdict;
   costUsd: number;
 }
 
@@ -87,6 +88,14 @@ export async function runRead(query: string, opts: { paidTx?: string; forceMode?
   const mark = (stage: string) => console.error(`  [${readId.slice(0, 8)}] ${stage} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   try {
+    // Stocks desk — OKX tokenized equity (xStock) + equity research + prediction
+    // markets on the company → cross-venue read. Self-contained (no crypto resolve).
+    if (forceMode === "stocks") {
+      const v = await stockRead(query, budget);
+      completeRead(readId, v.resolved, v, null, budget.total());
+      if (paidTx) db.prepare("UPDATE reads SET paid_tx = ? WHERE id = ?").run(paidTx, readId);
+      return { readId, verdict: v, costUsd: budget.total() };
+    }
     // Dedicated-service modes force a single capability regardless of query text.
     if (forceMode === "edge" || forceMode === "daily" || forceMode === "smartmoney") {
       let v: EdgeVerdict | DailyVerdict | SmartMoneyVerdict;

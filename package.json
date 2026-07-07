@@ -21,6 +21,7 @@
     "risk": "tsx src/lenses/risk.ts",
     "timing": "tsx src/lenses/timing.ts",
     "smartmoney": "tsx src/lenses/smartmoney.ts",
+    "stocks": "tsx src/lenses/stocks.ts",
     "resolve-picks": "tsx scripts/resolve-picks.ts",
     "unlocks": "tsx src/lenses/unlocks.ts",
     "card": "tsx src/card/render.ts"
