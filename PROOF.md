@@ -67,10 +67,21 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
 
 - **Jul 7, 2026 — RESUBMITTED for review (fix in place)**
   - Resubmit path: OKX.AI has no web resubmit UI (fully agent-driven); the "Agent conversation interface"
-    is the onchainos agent CLI. `agent activate` alone won't resubmit a rejected listing; the working path
-    is `agent update --service '[…operation:update on all 6…]'` (re-runs endpoint QA on the fixed 402) then
-    `agent activate`. The activate response's `success:false` is a red herring (the on-chain status toggle
-    no-ops because the agent is already online); submit-approval still lands.
-  - On-chain update tx: 0x3484bae85a021389bf0ef39f08bd3898a348f9efff68a68df6efcbd97ee4e1a4 (SUCCESS)
-  - Owner-facing status (`agent get-my-agents`): approvalDisplayStatus 2 — **"Listing under review"**. Review
-    result within ~24h (email to dimejikeji5@gmail.com).
+    is the onchainos agent CLI. Working path: `agent update --service '[…operation:update…]'` (re-runs endpoint
+    QA on the fixed 402) then `agent activate`.
+  - Owner-facing status (`agent get-my-agents`): approvalDisplayStatus 2 — **"Listing under review"**.
+
+- **Jul 7, 2026 — rejected AGAIN (x402 verification), root-caused via a synchronous oracle, fixed**
+  - 2nd/3rd rejection: "The Agent has not passed x402 verification. Please re-verify service availability."
+    The decimals fix cleared the first (generic) rejection but not this deeper x402 check.
+  - Oracle discovered: `agent activate` returns `data.activate.rejectReason` synchronously — the live
+    x402-verification verdict. Iterated against it instead of waiting on emails.
+  - Compared our 402 challenge to an APPROVED A2MCP agent (Onchain Data Explorer) that settles the SAME
+    USDT0 asset. Deltas: it advertises BOTH `exact` + `aggr_deferred` schemes (we had only `exact`); its
+    accepts `extra` carries `symbol:"USDT"` + `transferMethod:"eip3009"`; its `resource.url` is https.
+  - DECISIVE fix: register `AggrDeferredEvmScheme` and advertise `exact` + `aggr_deferred` (commit 722d3c6).
+    After deploy, the activate oracle's `rejectReason` went `"...x402 verification"` → **null**. Also added
+    `symbol`/`transferMethod` to extra and forced https resource.url (commits ee57fa7→92c3817).
+  - Settlement unaffected — buyers' `payment pay` auto-selects `exact`: verified live, tx
+    `0x5437eea57030ebf75c6433fc2e6786e6e841924ba5c37fa09e6a2aba644404ab` (success:true).
+  - Status after fix: **"Listing under review"**, x402 verification passing. Awaiting review email.
