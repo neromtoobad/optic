@@ -145,7 +145,9 @@ export async function runRead(query: string, opts: { paidTx?: string; forceMode?
           card_url: null,
         };
       }
-      completeRead(readId, resolved, v, null, budget.total());
+      const card = await renderCardBounded(readId, v, budget);
+      await applyCard(v, card, readId);
+      completeRead(readId, resolved, v, v.card_url, budget.total());
       if (paidTx) db.prepare("UPDATE reads SET paid_tx = ? WHERE id = ?").run(paidTx, readId);
       return { readId, verdict: v, costUsd: budget.total() };
     }

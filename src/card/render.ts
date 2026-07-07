@@ -3,10 +3,10 @@ import { join } from "node:path";
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
-import type { DailyVerdict, EdgeVerdict, ScanVerdict, SmartMoneyVerdict, StockVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, EdgeVerdict, RugVerdict, ScanVerdict, SmartMoneyVerdict, StockVerdict, TimingVerdict, Verdict } from "../types.js";
 import { generateBackground } from "./venice.js";
 
-type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | StockVerdict;
+type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | StockVerdict | RugVerdict | TimingVerdict;
 import { BudgetGuard } from "../pipeline/budget.js";
 import { config } from "../config.js";
 import { isCliEntry } from "../fixtures.js";
@@ -213,20 +213,113 @@ function stockChips(v: StockVerdict): Chip[] {
   ];
 }
 
+const RISK_COLOR = (lvl?: string): string =>
+  lvl === "danger" ? "#ff5a5a" : lvl === "elevated" ? "#ff8a3d" : lvl === "caution" ? "#f5c944" : "#4be3c3";
+const STAGE_COLOR = (s?: string): string =>
+  s === "peaking" ? "#ff8a3d" : s === "igniting" ? "#4be3c3" : s === "building" ? "#f5c944" : s === "cooling" ? "#8a93a6" : MUTE;
+
+const fmtAge = (hours: number | null): string => {
+  if (hours === null) return "—";
+  if (hours < 48) return `${Math.round(hours)}h`;
+  return `${Math.round(hours / 24)}d`;
+};
+
+function rugChips(v: RugVerdict): Chip[] {
+  const r = v.risk;
+  const flags = r?.flags ?? [];
+  const pos = r?.positives ?? [];
+  return [
+    {
+      lens: "risk level",
+      stat: (r?.level ?? "—").toUpperCase(),
+      color: RISK_COLOR(r?.level),
+      sub: flags[0] ? trunc(flags[0], 46) : "no red flags found",
+    },
+    {
+      lens: "red flags",
+      stat: `${flags.length} flagged`,
+      color: "#ff8a3d",
+      sub: trunc(flags[1] ?? flags[0] ?? "clean scan", 46),
+    },
+    {
+      lens: "positives",
+      stat: `${pos.length} ok`,
+      color: "#4be3c3",
+      sub: trunc(pos[0] ?? "none noted", 46),
+    },
+  ];
+}
+
+function timingChips(v: TimingVerdict): Chip[] {
+  const t = v.timing;
+  return [
+    {
+      lens: "stage",
+      stat: (t?.stage ?? "—").toUpperCase(),
+      color: STAGE_COLOR(t?.stage),
+      sub: trunc(t?.read ?? "no timing read", 46),
+    },
+    {
+      lens: "hotness · 24h",
+      stat: t?.hotness != null ? String(Math.round(t.hotness)) : "—",
+      color: "#f5c944",
+      sub: t?.hotness_change_pct != null ? `${fmtPct(t.hotness_change_pct, true)} vs prior window` : "no change data",
+    },
+    {
+      lens: "age",
+      stat: fmtAge(t?.age_hours ?? null),
+      color: "#4be3c3",
+      sub: t?.engagement_change_pct != null ? `engagement ${fmtPct(t.engagement_change_pct, true)}` : "since launch",
+    },
+  ];
+}
+
 // ── template ──────────────────────────────────────────────────────────
 
 function template(v: AnyVerdict): ReturnType<typeof html> {
+  // RugVerdict/TimingVerdict share resolved.type "token" with Verdict, so detect
+  // them by their unique fields (Verdict is the only one carrying `venues`).
+  const has = (k: string): boolean => Object.prototype.hasOwnProperty.call(v, k);
   const isScan = v.resolved.type === "scan";
   const isDaily = v.resolved.type === "daily";
   const isEdge = v.resolved.type === "edge";
   const isSmart = v.resolved.type === "smartmoney";
   const isStock = v.resolved.type === "stock";
-  const isVerdict = !isScan && !isDaily && !isEdge && !isSmart && !isStock;
-  // Stocks share the divergence-score hero, but the divergence lives under stock.
-  const div = isVerdict ? (v as Verdict).divergence : isStock ? (v as StockVerdict).stock?.divergence ?? null : null;
-  const score = div ? div.score : null;
-  const direction = div ? div.direction.replace(/_/g, " ") : null;
-  const ticksOn = score === null ? 0 : Math.round(score / 10);
+  const isRug = !isStock && has("risk") && !has("venues");
+  const isTiming = !isStock && has("timing") && !has("risk") && !has("venues");
+
+  // Hero panel for the "big number" modes (verdict / stock / rug / timing).
+  let heroLabel = "DIVERGENCE";
+  let heroNum: number | null = null;
+  let heroSuffix = "/100";
+  let heroDir: string | null = null;
+  let heroColor = AMBER;
+  let heroTicks = true;
+  if (isRug) {
+    const r = (v as RugVerdict).risk;
+    heroLabel = "RISK";
+    heroNum = r ? r.score : null;
+    heroDir = r ? r.level : null;
+    heroColor = RISK_COLOR(r?.level);
+  } else if (isTiming) {
+    const t = (v as TimingVerdict).timing;
+    heroLabel = "HOTNESS";
+    heroSuffix = "";
+    heroNum = t?.hotness != null ? Math.round(t.hotness) : null;
+    heroDir = t?.stage ?? null;
+    heroColor = STAGE_COLOR(t?.stage);
+    heroTicks = t?.hotness != null;
+  } else if (isStock) {
+    const div = (v as StockVerdict).stock?.divergence ?? null;
+    heroNum = div ? div.score : null;
+    heroDir = div ? div.direction.replace(/_/g, " ") : null;
+  } else {
+    const div = (v as Verdict).divergence;
+    heroNum = div ? div.score : null;
+    heroDir = div ? div.direction.replace(/_/g, " ") : null;
+  }
+  const ticksOn = heroNum === null ? 0 : Math.min(10, Math.round(heroNum / 10));
+
   const chips = isScan
     ? scanChips(v as ScanVerdict)
     : isDaily
@@ -237,7 +330,11 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
           ? smartChips(v as SmartMoneyVerdict)
           : isStock
             ? stockChips(v as StockVerdict)
-            : verdictChips(v as Verdict);
+            : isRug
+              ? rugChips(v as RugVerdict)
+              : isTiming
+                ? timingChips(v as TimingVerdict)
+                : verdictChips(v as Verdict);
   const kicker = isScan
     ? "market scan · discovery read"
     : isDaily
@@ -248,7 +345,11 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
           ? "smart money · accumulation"
           : isStock
             ? "stocks desk · cross-venue"
-            : "cross-venue read";
+            : isRug
+              ? "rug radar · safety scan"
+              : isTiming
+                ? "narrative timing · lifecycle"
+                : "cross-venue read";
   const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
   const tipCount = isDaily
     ? (v as DailyVerdict).tips.length
@@ -298,15 +399,19 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
                  <div style="display:flex;font-size:40px;color:${MUTE};font-weight:500;">x</div>
                </div>
                <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(scanTop ? `$${scanTop.symbol} mention rate vs 24h` : "no signal")}</div>`
-            : `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">DIVERGENCE</div>
+            : `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">${heroLabel}</div>
                <div style="display:flex;align-items:baseline;margin-top:8px;">
-                 <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${AMBER};">${score ?? "—"}</div>
-                 <div style="display:flex;font-size:42px;color:${MUTE};font-weight:500;">/100</div>
+                 <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${heroColor};">${heroNum ?? "—"}</div>
+                 ${heroSuffix ? `<div style="display:flex;font-size:42px;color:${MUTE};font-weight:500;">${heroSuffix}</div>` : ""}
                </div>
-               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(direction ?? "")}</div>
-               <div style="display:flex;margin-top:16px;">
-                 ${Array.from({ length: 10 }, (_, i) => `<div style="display:flex;width:14px;height:5px;margin-left:5px;background-color:${i < ticksOn ? AMBER : "rgba(255,255,255,.14)"};"></div>`).join("")}
+               <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(heroDir ?? "")}</div>
+               ${
+                 heroTicks
+                   ? `<div style="display:flex;margin-top:16px;">
+                 ${Array.from({ length: 10 }, (_, i) => `<div style="display:flex;width:14px;height:5px;margin-left:5px;background-color:${i < ticksOn ? heroColor : "rgba(255,255,255,.14)"};"></div>`).join("")}
                </div>`
+                   : ""
+               }`
         }
       </div>
     </div>
