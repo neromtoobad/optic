@@ -99,3 +99,11 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
     or disclaimer-laden summary → `[D1] missing sections` / `[D3] summary exceeds …`. Only the changed
     service is re-checked (originals grandfathered). After fix (summary width 189): activate rejectReason null.
   - Status: all **7 services** live, **"Listing under review"**, x402 + description checks passing.
+
+- **Jul 7, 2026 — Stocks Desk shareable card + live paid read**
+  - Added a branded card for /v1/stocks: divergence-score hero + three chips (OKX tokenized xStock price,
+    reported analyst consensus, prediction/catalyst). Degrades gracefully when a venue is absent.
+  - Live paid read settled: tx `0x8a8825f0fc5276673e35bd43f27c656a1a8fd07b2fc50bc672eb71d4379501a1`
+    (success:true, 0.5 USDT). TSLA → TSLAx $414.77 (+4.1%), divergence 40, card served (not pending):
+    https://optic-production-5675.up.railway.app/v1/card/d7dfe75e-e58a-42c2-872c-4d2d584aba8c
+  - Proves the premium stocks service settles and renders a shareable card end-to-end on production.
