@@ -200,6 +200,7 @@ export interface StockRead {
   tokenized: StockTokenized | null; // OKX-listed xStock, if any
   market_snapshot: string | null; // reported real-world price/level + recent move (from research)
   analyst_consensus: string | null; // reported sell-side consensus rating/target — data, attributed, not our call
+  consensus_tag: string | null; // short reported rating for the card (e.g. "Strong Buy") — attributed data, not our call
   catalysts: string[]; // upcoming/recent catalysts (earnings, guidance, macro)
   divergence: Divergence; // where the venues diverge on the same company
 }

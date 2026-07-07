@@ -36,6 +36,7 @@ const SYNTH_SCHEMA = {
   properties: {
     market_snapshot: { type: "string", description: "One line: the reported real-world share price and recent move, taken from the research. Empty string if unknown." },
     analyst_consensus: { type: "string", description: "One line: the reported sell-side consensus rating and average price target, attributed as data (e.g. 'Consensus Buy, avg target $290 (per research)'). Empty string if unknown. NEVER phrase as your own recommendation." },
+    consensus_tag: { type: "string", description: "The reported sell-side consensus rating in 1-2 words only (e.g. 'Strong Buy', 'Buy', 'Hold', 'Sell'). Empty string if unknown. This is reported data, never your own call." },
     catalysts: { type: "array", items: { type: "string" }, description: "0-4 concrete upcoming/recent catalysts (next earnings date, guidance, product launch, macro event)." },
     divergence: {
       type: "object",
@@ -140,6 +141,7 @@ export async function stockRead(query: string, budget: BudgetGuard): Promise<Sto
   const synth = await structuredCall<{
     market_snapshot: string;
     analyst_consensus: string;
+    consensus_tag: string;
     catalysts: string[];
     divergence: StockRead["divergence"];
     verdict_line: string;
@@ -165,6 +167,7 @@ export async function stockRead(query: string, budget: BudgetGuard): Promise<Sto
     tokenized,
     market_snapshot: synth.market_snapshot || null,
     analyst_consensus: synth.analyst_consensus || null,
+    consensus_tag: synth.consensus_tag || null,
     catalysts: synth.catalysts ?? [],
     divergence: synth.divergence,
   };

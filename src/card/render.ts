@@ -3,10 +3,10 @@ import { join } from "node:path";
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
-import type { DailyVerdict, EdgeVerdict, ScanVerdict, SmartMoneyVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, EdgeVerdict, ScanVerdict, SmartMoneyVerdict, StockVerdict, Verdict } from "../types.js";
 import { generateBackground } from "./venice.js";
 
-type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict;
+type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | StockVerdict;
 import { BudgetGuard } from "../pipeline/budget.js";
 import { config } from "../config.js";
 import { isCliEntry } from "../fixtures.js";
@@ -64,6 +64,7 @@ const title = (v: AnyVerdict): string => {
   if (v.resolved.type === "daily") return "Today's alpha";
   if (v.resolved.type === "edge") return "Edge radar";
   if (v.resolved.type === "smartmoney") return "Smart money";
+  if (v.resolved.type === "stock") return trunc(((v as StockVerdict).stock?.ticker ?? v.resolved.name).toUpperCase(), 40);
   const name = v.resolved.name;
   return trunc(name.length <= 3 ? name.toUpperCase() : name[0].toUpperCase() + name.slice(1), 40);
 };
@@ -177,6 +178,41 @@ function smartChips(v: SmartMoneyVerdict): Chip[] {
   }));
 }
 
+function stockChips(v: StockVerdict): Chip[] {
+  const s = v.stock;
+  const tk = s?.tokenized;
+  const top = v.prediction?.markets?.[0];
+  return [
+    {
+      lens: "okx · tokenized xstock",
+      stat: tk ? fmtPrice(tk.price) : "not listed",
+      color: "#4be3c3",
+      sub: tk
+        ? `${tk.symbol} · ${fmtPct(tk.chg_24h, true)} 24h · liq ${fmtUsd(tk.liquidity)}`
+        : "no xStock on OKX for this name",
+    },
+    {
+      lens: "equity · research",
+      stat: trunc(s?.consensus_tag || "—", 16),
+      color: "#f5c944",
+      sub: trunc(s?.analyst_consensus || s?.market_snapshot || "no fresh equity research", 46),
+    },
+    top
+      ? {
+          lens: "prediction · polymarket",
+          stat: fmtPct(top.yes_price * 100),
+          color: "#ff8a3d",
+          sub: trunc(top.question, 46),
+        }
+      : {
+          lens: "catalyst · ahead",
+          stat: s?.catalysts?.length ? `${s.catalysts.length} flagged` : "clear",
+          color: "#ff8a3d",
+          sub: trunc(s?.catalysts?.[0] || "no prediction market prices this", 46),
+        },
+  ];
+}
+
 // ── template ──────────────────────────────────────────────────────────
 
 function template(v: AnyVerdict): ReturnType<typeof html> {
@@ -184,9 +220,12 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
   const isDaily = v.resolved.type === "daily";
   const isEdge = v.resolved.type === "edge";
   const isSmart = v.resolved.type === "smartmoney";
-  const isVerdict = !isScan && !isDaily && !isEdge && !isSmart;
-  const score = isVerdict ? (v as Verdict).divergence.score : null;
-  const direction = isVerdict ? (v as Verdict).divergence.direction.replace(/_/g, " ") : null;
+  const isStock = v.resolved.type === "stock";
+  const isVerdict = !isScan && !isDaily && !isEdge && !isSmart && !isStock;
+  // Stocks share the divergence-score hero, but the divergence lives under stock.
+  const div = isVerdict ? (v as Verdict).divergence : isStock ? (v as StockVerdict).stock?.divergence ?? null : null;
+  const score = div ? div.score : null;
+  const direction = div ? div.direction.replace(/_/g, " ") : null;
   const ticksOn = score === null ? 0 : Math.round(score / 10);
   const chips = isScan
     ? scanChips(v as ScanVerdict)
@@ -196,7 +235,9 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
         ? edgeChips(v as EdgeVerdict)
         : isSmart
           ? smartChips(v as SmartMoneyVerdict)
-          : verdictChips(v as Verdict);
+          : isStock
+            ? stockChips(v as StockVerdict)
+            : verdictChips(v as Verdict);
   const kicker = isScan
     ? "market scan · discovery read"
     : isDaily
@@ -205,7 +246,9 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
         ? "edge radar · mispricing scan"
         : isSmart
           ? "smart money · accumulation"
-          : "cross-venue read";
+          : isStock
+            ? "stocks desk · cross-venue"
+            : "cross-venue read";
   const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
   const tipCount = isDaily
     ? (v as DailyVerdict).tips.length
@@ -257,7 +300,7 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
                <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(scanTop ? `$${scanTop.symbol} mention rate vs 24h` : "no signal")}</div>`
             : `<div style="display:flex;font-family:'IBM Plex Mono';font-size:13px;letter-spacing:4px;color:${MUTE};">DIVERGENCE</div>
                <div style="display:flex;align-items:baseline;margin-top:8px;">
-                 <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${AMBER};">${score}</div>
+                 <div style="display:flex;font-size:140px;line-height:0.95;font-weight:700;letter-spacing:-5px;color:${AMBER};">${score ?? "—"}</div>
                  <div style="display:flex;font-size:42px;color:${MUTE};font-weight:500;">/100</div>
                </div>
                <div style="display:flex;font-family:'IBM Plex Mono';margin-top:10px;font-size:14px;color:#aab2c2;">${esc(direction ?? "")}</div>
