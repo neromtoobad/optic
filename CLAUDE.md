@@ -47,6 +47,7 @@ Anthropic API: narrative synthesis + divergence reasoning (structured JSON out).
 - POST /v1/read — x402-gated, 1 USDT flat. Body: { query: string (token address | ticker | narrative), chain?: string }. Response: full JSON verdict + card_url. Target p95 latency ≤ 60s; card generates in parallel with verdict assembly. If card is slow, respond with verdict + card_pending:true and expose GET /v1/card/:job_id (free) — never make the buyer wait on the image.
 - GET /v1/health — free.
 - Unpaid POST returns HTTP 402 with x402 payment requirements (the Onchain Data Explorer pattern: POST-only paid endpoints, GET on paid routes returns 405).
+- x402 LISTING GATE (learned Jul 7, cost a rejection): every accepts entry MUST carry `decimals` inside `extra` — we settle in USDT0 `0x779ded…736`, which OKX's task-system token registry doesn't know by address, so it can't resolve the price without it. Put decimals in `extra` ONLY; a top-level `decimals` breaks the facilitator's requirement matcher (base deep-equal) → "No matching payment requirements" on settle. Validate every change with `onchainos agent x402-check --endpoint <url> --body '{...}'`: must return `valid:true` AND a resolved `amountHuman`.
 
 ## Verdict schema (the product's spine — keep stable)
 {
