@@ -74,15 +74,26 @@ function instructionsToResponse(response: {
   return new Response(JSON.stringify(response.body ?? {}), { status: response.status, headers });
 }
 
-// USDT0 on X Layer is a 6-decimal token. The OKX task-system validator resolves
-// a service's price by reading `decimals` off each accepts entry; USDT0's address
-// (0x779ded…) is not in its by-address USDT/USDG token registry, so without an
-// explicit `decimals` it reports "cannot determine token decimals" and the
-// marketplace review rejects the listing as not payment-integrated. The x402
-// SDK omits `decimals`, so we inject it into the emitted 402 challenge here. This
-// is metadata only — the buyer signs EIP-3009 over from/to/value/nonce, never
-// `decimals`, so settlement is unaffected (proven the same asset settles live).
-const SETTLEMENT_DECIMALS = 6;
+// OKX's listing-time "x402 verification" needs each accepts entry to fully
+// describe the settlement token in `extra`: `symbol` (which token — USDT0's
+// address 0x779ded… is NOT in OKX's by-address USDT/USDG registry, so the symbol
+// is how it's identified), `transferMethod` ("eip3009" — how to settle it), plus
+// `name`/`version` for the EIP-712 domain and `decimals` for price resolution.
+// The stock x402 SDK emits only {name, version}; an APPROVED reference agent
+// (Onchain Data Explorer, same USDT0 asset) emits {name, version, symbol,
+// transferMethod}. We enrich the emitted 402 challenge to match.
+//
+// All of this goes ONLY inside `extra`, never in the base object. The facilitator's
+// requirement matcher deep-equals the base (everything except `extra`) and only
+// checks the SERVER's extra keys against the buyer — so surplus extra keys echoed
+// by the buyer are ignored and still match, whereas a new base field would break
+// the match ("No matching payment requirements"). Buyer signs EIP-3009 over
+// from/to/value/nonce (never these), so settlement is unaffected (proven live).
+const SETTLEMENT_EXTRA: Record<string, unknown> = {
+  symbol: "USDT",
+  transferMethod: "eip3009",
+  decimals: 6,
+};
 
 function injectAssetDecimals(response: {
   status: number;
@@ -93,20 +104,24 @@ function injectAssetDecimals(response: {
   const headers = { ...response.headers };
   const patchAccepts = (obj: unknown): boolean => {
     if (!obj || typeof obj !== "object") return false;
+    // Force the resource URL to https — Railway terminates TLS and forwards
+    // http internally, so the SDK stamps an http:// resource.url that a security-
+    // conscious verifier can reject. resource is not part of the accepts entry the
+    // matcher compares, so rewriting it is settlement-safe.
+    const resource = (obj as { resource?: { url?: unknown } }).resource;
+    if (resource && typeof resource.url === "string" && resource.url.startsWith("http://")) {
+      resource.url = "https://" + resource.url.slice("http://".length);
+    }
     const accepts = (obj as { accepts?: unknown }).accepts;
     if (!Array.isArray(accepts)) return false;
     for (const a of accepts) {
       if (a && typeof a === "object") {
         const entry = a as Record<string, unknown>;
-        // Decimals go ONLY inside `extra`, never top-level. The facilitator's
-        // requirement matcher deep-equals the base object (everything except
-        // `extra`) and only checks the SERVER's extra keys against the buyer —
-        // so a surplus `extra.decimals` echoed by the buyer is ignored and still
-        // matches, whereas a top-level `decimals` would break the base equality
-        // and reject settlement ("No matching payment requirements").
         if (entry.extra && typeof entry.extra === "object") {
           const extra = entry.extra as Record<string, unknown>;
-          if (extra.decimals === undefined) extra.decimals = SETTLEMENT_DECIMALS;
+          for (const [k, v] of Object.entries(SETTLEMENT_EXTRA)) {
+            if (extra[k] === undefined) extra[k] = v;
+          }
         }
       }
     }
