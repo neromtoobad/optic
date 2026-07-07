@@ -98,7 +98,12 @@ function injectAssetDecimals(response: {
     for (const a of accepts) {
       if (a && typeof a === "object") {
         const entry = a as Record<string, unknown>;
-        if (entry.decimals === undefined) entry.decimals = SETTLEMENT_DECIMALS;
+        // Decimals go ONLY inside `extra`, never top-level. The facilitator's
+        // requirement matcher deep-equals the base object (everything except
+        // `extra`) and only checks the SERVER's extra keys against the buyer —
+        // so a surplus `extra.decimals` echoed by the buyer is ignored and still
+        // matches, whereas a top-level `decimals` would break the base equality
+        // and reject settlement ("No matching payment requirements").
         if (entry.extra && typeof entry.extra === "object") {
           const extra = entry.extra as Record<string, unknown>;
           if (extra.decimals === undefined) extra.decimals = SETTLEMENT_DECIMALS;
