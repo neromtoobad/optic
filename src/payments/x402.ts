@@ -7,6 +7,7 @@ import {
 } from "@okxweb3/x402-core/server";
 import type { HTTPAdapter, HTTPRequestContext, RoutesConfig } from "@okxweb3/x402-core/server";
 import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
+import { AggrDeferredEvmScheme } from "@okxweb3/x402-evm/deferred/server";
 import { config } from "../config.js";
 import { db } from "../db.js";
 
@@ -168,13 +169,23 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
     secretKey: config.okx.secretKey,
     passphrase: config.okx.passphrase,
   });
-  const resourceServer = new x402ResourceServer(facilitator).register(NETWORK, new ExactEvmScheme());
+  // Register BOTH schemes. OKX's listing x402 verification (and A2MCP pay-per-call)
+  // expects the deferred scheme offered alongside exact — every approved OKX A2MCP
+  // agent advertises exact + aggr_deferred. The facilitator settles aggr_deferred
+  // asynchronously (status=success immediately, no polling). Buyers' `payment pay`
+  // auto-selects exact first, so existing settlement is unchanged.
+  const resourceServer = new x402ResourceServer(facilitator)
+    .register(NETWORK, new ExactEvmScheme())
+    .register(NETWORK, new AggrDeferredEvmScheme());
   const routes: RoutesConfig = {
     ...Object.fromEntries(
       PAID_ROUTES.map((r) => [
         `POST ${r.path}`,
         {
-          accepts: [{ scheme: "exact", network: NETWORK, payTo: config.payoutAddress, price: `$${r.price}` }],
+          accepts: [
+            { scheme: "exact", network: NETWORK, payTo: config.payoutAddress, price: `$${r.price}` },
+            { scheme: "aggr_deferred", network: NETWORK, payTo: config.payoutAddress, price: `$${r.price}` },
+          ],
           description: r.description,
           mimeType: "application/json",
         },
