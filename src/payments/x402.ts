@@ -150,6 +150,46 @@ function injectAssetDecimals(response: {
   return { ...response, headers, body };
 }
 
+// USDT0 on X Layer — the settlement asset. The full accepts `extra` an approved
+// OKX A2MCP agent advertises (name/version for EIP-712, symbol/transferMethod to
+// identify + route the token, decimals for price resolution).
+const SETTLEMENT_ASSET = "0x779ded0c9e1022225f8e0630b35a9b54be713736";
+const SETTLEMENT_FULL_EXTRA = { name: "USD₮0", version: "1", symbol: "USDT", transferMethod: "eip3009", decimals: 6 } as const;
+
+/**
+ * Build the standard 402 challenge for an UNPAID request directly — no facilitator
+ * call, no SDK init. This is what OKX's x402 validation probes, so it must ALWAYS
+ * succeed: a cold start, a Railway redeploy, or a transient facilitator outage must
+ * never turn an unpaid request into a 502. The bytes are identical to what the SDK
+ * + injectAssetDecimals emit (base fields match the SDK's canonical requirements, so
+ * a buyer paying against this challenge still settles through the SDK path unchanged).
+ */
+function build402ForPath(path: string): Response | null {
+  const route = PAID_ROUTES.find((r) => r.path === path);
+  if (!route) return null;
+  const amount = String(Math.round(route.price * 1_000_000)); // 6-decimal USDT0
+  const entry = (scheme: "exact" | "aggr_deferred") => ({
+    scheme,
+    network: NETWORK,
+    amount,
+    asset: SETTLEMENT_ASSET,
+    payTo: config.payoutAddress,
+    maxTimeoutSeconds: 300,
+    extra: { ...SETTLEMENT_FULL_EXTRA },
+  });
+  const challenge = {
+    x402Version: 2,
+    error: "Payment required",
+    resource: { url: `${config.publicBaseUrl}${path}`, description: route.description, mimeType: "application/json" },
+    accepts: [entry("exact"), entry("aggr_deferred")],
+  };
+  const header = Buffer.from(JSON.stringify(challenge)).toString("base64");
+  return new Response("{}", {
+    status: 402,
+    headers: { "content-type": "application/json", "PAYMENT-REQUIRED": header },
+  });
+}
+
 /**
  * Real x402 seller middleware (Phase 4), ported from @okxweb3/x402-express to
  * Hono. Unpaid POSTs get the 402 PAYMENT-REQUIRED challenge; signed requests
@@ -208,8 +248,32 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
       throw err;
     }
   };
+  // Warm the facilitator at boot so the first PAID request is fast (retry a few
+  // times through transient blips). Unpaid requests never wait on this.
+  void (async () => {
+    for (let i = 0; i < 5 && !initialized; i++) {
+      try {
+        await ensureInitialized();
+      } catch {
+        await new Promise((r) => setTimeout(r, 3000 * (i + 1)));
+      }
+    }
+  })();
 
   return async (c, next) => {
+    const paymentHeader = c.req.header("payment-signature") ?? c.req.header("x-payment");
+
+    // UNPAID request → emit the standard 402 challenge directly, with NO dependency
+    // on the facilitator or its init. Guarantees an unpaid probe (OKX's x402 check)
+    // ALWAYS gets a conformant 402, even mid-cold-start or during a facilitator hiccup.
+    if (!paymentHeader) {
+      const resp = build402ForPath(new URL(c.req.url).pathname);
+      if (resp) {
+        c.res = resp;
+        return;
+      }
+    }
+
     const parsedBody = await c.req.raw
       .clone()
       .json()
@@ -219,7 +283,7 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
       adapter,
       path: adapter.getPath(),
       method: c.req.method,
-      paymentHeader: c.req.header("payment-signature") ?? c.req.header("x-payment"),
+      paymentHeader,
     };
 
     if (!httpServer.requiresPayment(context)) return next();
