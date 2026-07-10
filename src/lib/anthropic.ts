@@ -13,6 +13,24 @@ const client = new Anthropic({
 });
 
 /**
+ * Model-emitted strings occasionally carry literal control characters mid-sentence
+ * (a paid Daily Alpha read produced "at 52.4%\roster cuts…" — the \r swallowed
+ * characters and broke the card layout). Verdict/headline fields are single-line
+ * by design, so collapse every C0 control char run to one space, recursively.
+ */
+function sanitizeStrings<T>(value: T): T {
+  if (typeof value === "string") {
+    // eslint-disable-next-line no-control-regex
+    return value.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/ {2,}/g, " ").trim() as unknown as T;
+  }
+  if (Array.isArray(value)) return value.map(sanitizeStrings) as unknown as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, sanitizeStrings(v)])) as unknown as T;
+  }
+  return value;
+}
+
+/**
  * Structured call: schema-constrained JSON out (output_config.format), actual
  * token cost registered with the read's budget guard.
  */
@@ -50,6 +68,8 @@ export async function structuredCall<T>(opts: {
   if (!text || text.type !== "text") {
     throw new Error(`anthropic:${opts.label} returned no text block (stop=${response.stop_reason})`);
   }
-  return JSON.parse(text.text) as T;
+  // Sanitize model-emitted strings (stray \r/\n control chars) before they reach
+  // the db, the API response, or the card renderer.
+  return sanitizeStrings(JSON.parse(text.text)) as T;
 }
 

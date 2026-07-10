@@ -107,3 +107,22 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
     (success:true, 0.5 USDT). TSLA → TSLAx $414.77 (+4.1%), divergence 40, card served (not pending):
     https://optic-production-5675.up.railway.app/v1/card/d7dfe75e-e58a-42c2-872c-4d2d584aba8c
   - Proves the premium stocks service settles and renders a shareable card end-to-end on production.
+
+- **Jul 10, 2026 — full 7/7 service test campaign: every service paid-proven on-chain**
+  - After the availability hardening (unpaid 402 with zero facilitator dependency, commit 94d7463) and a
+    re-settlement check (rug 0.05 → tx `0x5c19c08d36a26e3bb10060752009682646ff504150751ed448c175625d73645b`),
+    the four remaining never-paid-tested services were bought end-to-end on production:
+    - Narrative Timing 0.05 → tx `0xd11256153fb4ee3538def994ceec044beb1fe9d1af46b483ac9d3a7cf18e942d`
+      (23s; "Pepe: cooling, hotness 30.4 falling -27%"; background card served)
+    - Daily Alpha 0.5 → tx `0x24f7208de6eb4b4fbcbae286b0c4d43bac863740290a1943e32954f1dac53842`
+      (29s; Spain over Belgium 52.4% + roster research, 6 sources)
+    - Edge Radar 0.5 → tx `0x7a1071a95f8f3214aa60cd3865ef859e6920b825588c133827ac1ce45427d91a`
+      (47s; Spain-to-advance flagged softest at a conservative 38/100 — consistent with the Daily read)
+    - Smart Money 0.05 → tx `0x126e530e9e26a3c40317046b6b8d9bf7d1fd8325b299d5e46e4fa08e290c7e46`
+      (7s; "Smart money is loading ANSEM: 34 wallets, $96,674 bought")
+  - All 7 marketplace services have now taken a real x402 payment on production and delivered.
+  - Two cosmetic bugs surfaced by the campaign, fixed in this commit (held locally during the review
+    deploy-freeze; pushed after approval): ① model-emitted strings occasionally carried literal control
+    chars that broke card text ("52.4%\roster cuts…") — structuredCall now sanitizes all strings centrally;
+    ② smart-money verdict line formatted $88.2M as "$88176K" — tiered K/M/B formatter, duplicate branch
+    collapsed into smartMoneyVerdict().

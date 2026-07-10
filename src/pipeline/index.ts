@@ -53,6 +53,15 @@ async function applyCard(verdict: AnyVerdict, card: { card_url: string } | null,
   }
 }
 
+/** Tiered USD amount for verdict lines ($88.2M, not $88176K). */
+function fmtUsdTier(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "?";
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return String(Math.round(n));
+}
+
 function smartMoneyVerdict(query: string, flow: Awaited<ReturnType<typeof smartMoneyFlow>>): SmartMoneyVerdict {
   const list = flow ?? [];
   const top = list[0];
@@ -61,7 +70,7 @@ function smartMoneyVerdict(query: string, flow: Awaited<ReturnType<typeof smartM
     resolved: { type: "smartmoney", name: "smart money" },
     flow: list,
     verdict_line: top
-      ? `Smart money is loading ${top.symbol}: ${top.wallets} wallets, $${Math.round(top.buy_usd).toLocaleString()} bought at $${top.market_cap_usd ? Math.round(top.market_cap_usd / 1000) + "K" : "?"} mcap.`
+      ? `Smart money is loading ${top.symbol}: ${top.wallets} wallets, $${Math.round(top.buy_usd).toLocaleString()} bought at $${fmtUsdTier(top.market_cap_usd)} mcap.`
       : "No clear smart-money accumulation signal right now.",
     generated_at: new Date().toISOString(),
     card_url: null,
@@ -163,18 +172,7 @@ export async function runRead(query: string, opts: { paidTx?: string; forceMode?
     } else if (resolved.type === "edge") {
       verdict = { ...(await runEdge(budget, readId)), card_url: null };
     } else if (resolved.type === "smartmoney") {
-      const flow = (await smartMoneyFlow("501", budget)) ?? [];
-      const top = flow[0];
-      verdict = {
-        query,
-        resolved: { type: "smartmoney", name: "smart money" },
-        flow,
-        verdict_line: top
-          ? `Smart money is loading ${top.symbol}: ${top.wallets} wallets, $${Math.round(top.buy_usd).toLocaleString()} bought at $${top.market_cap_usd ? Math.round(top.market_cap_usd / 1000) + "K" : "?"} mcap.`
-          : "No clear smart-money accumulation signal right now.",
-        generated_at: new Date().toISOString(),
-        card_url: null,
-      };
+      verdict = smartMoneyVerdict(query, await smartMoneyFlow("501", budget));
     } else {
       // Each lens registers real per-call costs with the budget guard; any lens
       // may return null and the divergence engine treats absence as signal.
