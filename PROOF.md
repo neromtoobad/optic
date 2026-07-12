@@ -135,3 +135,21 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
     enriched extra, availability-hardened unpaid 402), service description format, and the agent image.
   - Meets the Phase 5 eligibility gate (listing approved ahead of the Jul 17 hackathon form deadline).
   - 7 services live, all pre-proven with real x402 settlements on X Layer.
+
+- **Jul 12, 2026 — TOUCHGRASS: new Lifestyle service built + paid-proven on production, same day**
+  - New service `/v1/touchgrass` (0.1 USDT): onchain wellness read — wallet address → 90d behavior
+    patterns (deterministic engine, 9 unit tests) → 0–100 wellness score + persona → personalized
+    grass/fuel/move protocol (every item traceable to a detected pattern) + weather-aware suggestion
+    (Open-Meteo, optional city) + gym window from the wallet's own quiet hours + TOUCHGRASS-branded card
+    (green Venice style variant). Free data spine: Blockscout (ETH+Base, outgoing-only) + Solana RPC.
+    COGS ≈ $0.014/read (Claude verdict line $0.004 + Venice bg $0.01; explorers free).
+  - Paid E2E on production, 45s after push: PAYMENT-SIGNATURE accepted, HTTP 200,
+    PAYMENT-RESPONSE status=success (aggr_deferred — facilitator settles async, no inline tx hash;
+    first live proof our advertised deferred scheme actually settles, not just passes verification).
+    payer 0xda30617e…7e9d, 0.1 USDT. Read: vitalik.eth → wellness 93/100 "Zen Gardener",
+    Lagos weather garnish, card served immediately:
+    https://optic-production-5675.up.railway.app/v1/card/26e2355e-781e-422f-b389-bc68cdab6bf4
+  - Purpose: second hackathon entry targeting the **Lifestyle Companion** category (marketplace scan
+    Jul 12: sales concentrate in 2 food-photo agents; ~12 fortune-tellers at 0 sold; nothing
+    crypto-native, nothing with a shareable card). Listing as a separate agent so OPTIC's approved
+    listing is untouched.
