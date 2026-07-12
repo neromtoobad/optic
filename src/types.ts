@@ -146,6 +146,21 @@ export interface EdgeVerdict {
   card_pending?: boolean;
 }
 
+// TOUCHGRASS service — onchain wellness read for a wallet (Lifestyle listing).
+// Diagnosis (deterministic patterns from tx timestamps) → prescription (protocol
+// items each traceable to a pattern). Entertainment + self-reflection framing;
+// observational wellness language only — never medical, never financial.
+export interface TouchGrassVerdict {
+  query: string;
+  resolved: { type: "touchgrass"; name: string; address: string; chains: string[] };
+  wellness: import("./engine/wellness.js").Wellness | null;
+  protocol: import("./engine/protocol.js").Protocol | null;
+  verdict_line: string;
+  generated_at: string;
+  card_url: string | null;
+  card_pending?: boolean;
+}
+
 // RUG RADAR service — standalone token safety score.
 export interface RugVerdict {
   query: string;

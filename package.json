@@ -24,7 +24,9 @@
     "stocks": "tsx src/lenses/stocks.ts",
     "resolve-picks": "tsx scripts/resolve-picks.ts",
     "unlocks": "tsx src/lenses/unlocks.ts",
-    "card": "tsx src/card/render.ts"
+    "card": "tsx src/card/render.ts",
+    "wallet": "tsx src/lenses/wallet.ts",
+    "touchgrass": "tsx src/touchgrass/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

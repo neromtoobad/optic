@@ -38,7 +38,7 @@ app.get("/v1/track-record", async (c) => {
 const paymentMiddleware = createX402Middleware();
 
 // Modes that need a query param (a token/subject); discovery modes ignore the body.
-const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing", "stocks"]);
+const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing", "stocks", "touchgrass"]);
 
 for (const route of PAID_ROUTES) {
   const mode = route.mode; // undefined = full cross-venue read
@@ -49,8 +49,9 @@ for (const route of PAID_ROUTES) {
 
   app.post(route.path, paymentMiddleware, async (c) => {
     let query = "";
+    let extras: { city?: string; tz?: string } | undefined;
     if (needsQuery) {
-      let body: { query?: unknown };
+      let body: { query?: unknown; city?: unknown; tz?: unknown };
       try {
         body = await c.req.json();
       } catch {
@@ -59,12 +60,19 @@ for (const route of PAID_ROUTES) {
       query = typeof body.query === "string" ? body.query.trim() : "";
       if (!query) return c.json({ error: "query is required (a token address, ticker, or subject)" }, 400);
       if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
+      // TouchGrass personalization: optional city (weather) + IANA timezone.
+      if (mode === "touchgrass") {
+        extras = {
+          city: typeof body.city === "string" ? body.city.trim().slice(0, 60) : undefined,
+          tz: typeof body.tz === "string" ? body.tz.trim().slice(0, 60) : undefined,
+        };
+      }
     } else {
       query = mode ?? "read";
     }
 
     try {
-      const { readId, verdict, costUsd } = await runRead(query, mode ? { forceMode: mode } : {});
+      const { readId, verdict, costUsd } = await runRead(query, mode ? { forceMode: mode, extras } : {});
       console.log(`${route.path} ${readId} complete — cost $${costUsd.toFixed(4)}`);
       c.header(READ_ID_HEADER, readId); // settlement middleware attaches tx hash, then strips it
       return c.json(verdict);

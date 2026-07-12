@@ -18,13 +18,13 @@ import { renderCard } from "../card/render.js";
 import { BudgetGuard } from "./budget.js";
 import { db, insertRead, completeRead, failRead } from "../db.js";
 
-import type { RugVerdict, TimingVerdict, StockVerdict } from "../types.js";
+import type { RugVerdict, TimingVerdict, StockVerdict, TouchGrassVerdict } from "../types.js";
 
-export type ForceMode = "edge" | "daily" | "smartmoney" | "rug" | "timing" | "stocks";
+export type ForceMode = "edge" | "daily" | "smartmoney" | "rug" | "timing" | "stocks" | "touchgrass";
 
 export interface PipelineResult {
   readId: string;
-  verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | RugVerdict | TimingVerdict | StockVerdict;
+  verdict: Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | RugVerdict | TimingVerdict | StockVerdict | TouchGrassVerdict;
   costUsd: number;
 }
 
@@ -87,7 +87,10 @@ const CARD_TIMEOUT_MS = 15_000;
  * unlock calendar. Budget-capped per read; lenses may return null (absence is
  * signal); card runs in parallel and never blocks the verdict.
  */
-export async function runRead(query: string, opts: { paidTx?: string; forceMode?: ForceMode } = {}): Promise<PipelineResult> {
+export async function runRead(
+  query: string,
+  opts: { paidTx?: string; forceMode?: ForceMode; extras?: { city?: string; tz?: string } } = {}
+): Promise<PipelineResult> {
   const { paidTx, forceMode } = opts;
   const readId = randomUUID();
   insertRead(readId, query);
@@ -97,6 +100,19 @@ export async function runRead(query: string, opts: { paidTx?: string; forceMode?
   const mark = (stage: string) => console.error(`  [${readId.slice(0, 8)}] ${stage} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   try {
+    // TouchGrass — onchain wellness read (Lifestyle listing). Self-contained.
+    if (forceMode === "touchgrass") {
+      const { runTouchGrass } = await import("../touchgrass/index.js");
+      const base = await runTouchGrass(query, opts.extras ?? {}, budget);
+      const v: TouchGrassVerdict = { ...base, card_url: null };
+      if (v.wellness) {
+        const card = await renderCardBounded(readId, v, budget);
+        await applyCard(v, card, readId);
+      }
+      completeRead(readId, v.resolved, v, v.card_url, budget.total());
+      if (paidTx) db.prepare("UPDATE reads SET paid_tx = ? WHERE id = ?").run(paidTx, readId);
+      return { readId, verdict: v, costUsd: budget.total() };
+    }
     // Stocks desk — OKX tokenized equity (xStock) + equity research + prediction
     // markets on the company → cross-venue read. Self-contained (no crypto resolve).
     if (forceMode === "stocks") {

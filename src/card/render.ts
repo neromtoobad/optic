@@ -3,10 +3,10 @@ import { join } from "node:path";
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
-import type { DailyVerdict, EdgeVerdict, RugVerdict, ScanVerdict, SmartMoneyVerdict, StockVerdict, TimingVerdict, Verdict } from "../types.js";
+import type { DailyVerdict, EdgeVerdict, RugVerdict, ScanVerdict, SmartMoneyVerdict, StockVerdict, TimingVerdict, TouchGrassVerdict, Verdict } from "../types.js";
 import { generateBackground } from "./venice.js";
 
-type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | StockVerdict | RugVerdict | TimingVerdict;
+type AnyVerdict = Verdict | ScanVerdict | DailyVerdict | EdgeVerdict | SmartMoneyVerdict | StockVerdict | RugVerdict | TimingVerdict | TouchGrassVerdict;
 import { BudgetGuard } from "../pipeline/budget.js";
 import { config } from "../config.js";
 import { isCliEntry } from "../fixtures.js";
@@ -250,6 +250,37 @@ function rugChips(v: RugVerdict): Chip[] {
   ];
 }
 
+const WELLNESS_COLOR = (score: number | null): string =>
+  score === null ? MUTE : score >= 65 ? "#4be3c3" : score >= 45 ? "#f5c944" : "#ff5a5a";
+
+function touchgrassChips(v: TouchGrassVerdict): Chip[] {
+  const w = v.wellness;
+  const p = v.protocol;
+  if (!w) return [];
+  return [
+    {
+      lens: "nights · 00–06 local",
+      stat: `${w.stats.night_pct}%`,
+      color: w.stats.night_pct >= 15 ? "#ff8a3d" : "#4be3c3",
+      sub:
+        w.patterns.find((x) => x.id === "late_night")?.stat ??
+        "nights are for sleep — the chain waits",
+    },
+    {
+      lens: "days onchain · 90d",
+      stat: `${w.stats.active_days}/90`,
+      color: w.stats.active_days >= 63 ? "#ff8a3d" : w.stats.active_days >= 45 ? "#f5c944" : "#4be3c3",
+      sub: `longest offchain break: ${w.stats.longest_break_h >= 48 ? `${Math.round(w.stats.longest_break_h / 24)}d` : `${Math.round(w.stats.longest_break_h)}h`}`,
+    },
+    {
+      lens: "gym window · quietest",
+      stat: p?.move.window ?? "open",
+      color: "#4be3c3",
+      sub: trunc(p?.grass[0] ?? "protocol in the full read", 46),
+    },
+  ];
+}
+
 function timingChips(v: TimingVerdict): Chip[] {
   const t = v.timing;
   return [
@@ -285,8 +316,9 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
   const isEdge = v.resolved.type === "edge";
   const isSmart = v.resolved.type === "smartmoney";
   const isStock = v.resolved.type === "stock";
-  const isRug = !isStock && has("risk") && !has("venues");
-  const isTiming = !isStock && has("timing") && !has("risk") && !has("venues");
+  const isTouch = v.resolved.type === "touchgrass";
+  const isRug = !isStock && !isTouch && has("risk") && !has("venues");
+  const isTiming = !isStock && !isTouch && has("timing") && !has("risk") && !has("venues");
 
   // Hero panel for the "big number" modes (verdict / stock / rug / timing).
   let heroLabel = "DIVERGENCE";
@@ -295,7 +327,13 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
   let heroDir: string | null = null;
   let heroColor = AMBER;
   let heroTicks = true;
-  if (isRug) {
+  if (isTouch) {
+    const w = (v as TouchGrassVerdict).wellness;
+    heroLabel = "WELLNESS";
+    heroNum = w ? w.score : null;
+    heroDir = w ? w.persona.toLowerCase() : null;
+    heroColor = WELLNESS_COLOR(w ? w.score : null);
+  } else if (isRug) {
     const r = (v as RugVerdict).risk;
     heroLabel = "RISK";
     heroNum = r ? r.score : null;
@@ -330,11 +368,13 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
           ? smartChips(v as SmartMoneyVerdict)
           : isStock
             ? stockChips(v as StockVerdict)
-            : isRug
-              ? rugChips(v as RugVerdict)
-              : isTiming
-                ? timingChips(v as TimingVerdict)
-                : verdictChips(v as Verdict);
+            : isTouch
+              ? touchgrassChips(v as TouchGrassVerdict)
+              : isRug
+                ? rugChips(v as RugVerdict)
+                : isTiming
+                  ? timingChips(v as TimingVerdict)
+                  : verdictChips(v as Verdict);
   const kicker = isScan
     ? "market scan · discovery read"
     : isDaily
@@ -345,11 +385,13 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
           ? "smart money · accumulation"
           : isStock
             ? "stocks desk · cross-venue"
-            : isRug
-              ? "rug radar · safety scan"
-              : isTiming
-                ? "narrative timing · lifecycle"
-                : "cross-venue read";
+            : isTouch
+              ? "onchain wellness · 90d read"
+              : isRug
+                ? "rug radar · safety scan"
+                : isTiming
+                  ? "narrative timing · lifecycle"
+                  : "cross-venue read";
   const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
   const tipCount = isDaily
     ? (v as DailyVerdict).tips.length
@@ -374,7 +416,7 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
 
   <div style="display:flex;flex-direction:column;position:absolute;top:0;left:0;width:${W}px;height:${H}px;padding:58px 64px 48px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono';font-size:14px;letter-spacing:3px;color:${MUTE};">
-      <div style="display:flex;font-weight:600;letter-spacing:4px;color:${INK};">OPTIC A<span style="color:${AMBER};">I</span></div>
+      <div style="display:flex;font-weight:600;letter-spacing:4px;color:${INK};">${isTouch ? `TOUCH<span style="color:#4be3c3;">GRASS</span>` : `OPTIC A<span style="color:${AMBER};">I</span>`}</div>
       <div style="display:flex;">${kicker.toUpperCase()} · ${dateLine().toUpperCase()}</div>
       <div style="display:flex;">OKX.AI</div>
     </div>
@@ -446,7 +488,7 @@ export async function renderCard(
   const t0 = Date.now();
   const mark = (s: string) => console.error(`  [card ${readId.slice(0, 8)}] ${s} +${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
-  const bg = await generateBackground(budget);
+  const bg = await generateBackground(budget, verdict.resolved.type === "touchgrass" ? "touchgrass" : "optic");
   mark("venice");
 
   const svg = await satori(template(verdict) as Parameters<typeof satori>[0], {

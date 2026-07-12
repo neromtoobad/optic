@@ -7,12 +7,17 @@ const MODEL = "z-image-turbo";
 export const VENICE_COST_USD = 0.01;
 const STYLE_PROMPT =
   "Very dark near-black abstract composition, two thin luminous streams of light — one amber, one cyan — splitting apart and diverging toward opposite corners, fine particle trails, deep black negative space in the center-left, subtle film grain, minimal, elegant, cinematic, no text no letters no numbers";
+// TouchGrass brand variant — one locked style per brand, same consistency rule.
+const TOUCHGRASS_PROMPT =
+  "Very dark near-black abstract composition, thin luminous blades of grass in neon green and soft teal rising from the bottom edge, faint dawn glow on the horizon, fine particle trails drifting upward, deep black negative space upper-left, subtle film grain, minimal, elegant, cinematic, no text no letters no numbers";
+
+export type CardStyle = "optic" | "touchgrass";
 
 /**
  * Venice background for a card. Returns raw PNG bytes, or null on any failure —
  * the renderer falls back to a gradient; the card never blocks the verdict.
  */
-export async function generateBackground(budget: BudgetGuard): Promise<Buffer | null> {
+export async function generateBackground(budget: BudgetGuard, style: CardStyle = "optic"): Promise<Buffer | null> {
   if (!config.veniceApiKey) return null;
   try {
     budget.register("venice:card_bg", VENICE_COST_USD);
@@ -24,7 +29,7 @@ export async function generateBackground(budget: BudgetGuard): Promise<Buffer | 
       },
       body: JSON.stringify({
         model: MODEL,
-        prompt: STYLE_PROMPT,
+        prompt: style === "touchgrass" ? TOUCHGRASS_PROMPT : STYLE_PROMPT,
         width: 1200,
         height: 672,
         format: "png",
