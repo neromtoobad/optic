@@ -126,3 +126,12 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
     chars that broke card text ("52.4%\roster cuts…") — structuredCall now sanitizes all strings centrally;
     ② smart-money verdict line formatted $88.2M as "$88176K" — tiered K/M/B formatter, duplicate branch
     collapsed into smartMoneyVerdict().
+
+## Listed
+
+- **Jul 12, 2026 — LISTING APPROVED: Optic AI is live on the OKX.AI marketplace**
+  - approvalLabel: "Listed — eligible for task recommendations" · status: active
+  - Passed after fixing, across review cycles: x402 verification (dual-scheme exact + aggr_deferred,
+    enriched extra, availability-hardened unpaid 402), service description format, and the agent image.
+  - Meets the Phase 5 eligibility gate (listing approved ahead of the Jul 17 hackathon form deadline).
+  - 7 services live, all pre-proven with real x402 settlements on X Layer.
