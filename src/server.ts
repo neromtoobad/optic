@@ -103,6 +103,22 @@ app.get("/v1/card/:id", async (c) => {
   return c.json({ id: read.id, status: read.status, card_pending: true });
 });
 
+// Persistence guard: a mounted volume that the data paths don't point into means
+// every deploy silently wipes reads, sales records, and served cards (bit us
+// Jul 12 — vars were ./data/* while the volume mounts at /data; every posted
+// card link died on the next deploy). Loud at boot so it can't regress quietly.
+const volumeMount = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+if (volumeMount) {
+  for (const [name, p] of [["DATABASE_PATH", config.databasePath], ["CARDS_DIR", config.cardsDir]] as const) {
+    if (!p.startsWith(volumeMount)) {
+      console.error(
+        `!!! PERSISTENCE WARNING: volume mounted at ${volumeMount} but ${name}=${p} is NOT on it — ` +
+          `data will be WIPED on every deploy. Set ${name} to a path under ${volumeMount}.`
+      );
+    }
+  }
+}
+
 serve({ fetch: app.fetch, port: config.port }, (info) => {
   // Boot diagnostic: shows exactly what the container saw for the payment flag,
   // so a misconfigured env is obvious in the deploy log (value is not a secret).
