@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
 import { createX402Middleware, READ_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
@@ -8,6 +9,12 @@ import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
 
 const app = new Hono<{ Variables: { paidTx?: string } }>();
+
+// Marketing site — served from the same origin as the API, so the page's live
+// track-record fetch and card links need no CORS. optic.xyz-style custom domains
+// attach to this same service later without touching the registered endpoints.
+app.get("/", serveStatic({ path: "./site/index.html" }));
+app.use("/assets/*", serveStatic({ root: "./site" }));
 
 app.get("/v1/health", (c) =>
   c.json({

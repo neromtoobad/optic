@@ -14,8 +14,9 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
-# runtime assets: card fonts (read from cwd) + fixtures (CLI fallbacks)
+# runtime assets: card fonts (read from cwd) + fixtures (CLI fallbacks) + marketing site
 COPY assets ./assets
 COPY fixtures ./fixtures
+COPY site ./site
 EXPOSE 3000
 CMD ["node", "dist/server.js"]

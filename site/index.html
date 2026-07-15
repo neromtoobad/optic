@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optic AI — the onchain alpha desk</title>
+<meta name="description" content="One agent that reads memecoins, prediction markets, tokenized stocks and social attention as one economy — and shows you where they diverge. Live on OKX.AI, agent #4380.">
+<meta property="og:title" content="Optic AI — the onchain alpha desk">
+<meta property="og:description" content="Seven pay-per-call market intelligence services, settled on-chain via x402 on X Layer. The edge was never inside one market — it's in the gap between them.">
+<meta property="og:image" content="/assets/img/poster.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="/assets/img/optic-mark.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:'Space Grotesk';font-weight:500;src:url(/assets/fonts/sg-500.woff) format('woff');font-display:swap}
+@font-face{font-family:'Space Grotesk';font-weight:700;src:url(/assets/fonts/sg-700.woff) format('woff');font-display:swap}
+@font-face{font-family:'IBM Plex Mono';font-weight:400;src:url(/assets/fonts/ipm-400.woff) format('woff');font-display:swap}
+@font-face{font-family:'IBM Plex Mono';font-weight:600;src:url(/assets/fonts/ipm-600.woff) format('woff');font-display:swap}
+
+*{box-sizing:border-box}
+:root{
+  --ink:#05070d; --panel:#0b0e17; --panel2:#0f131e; --paper:#e8ebf2; --soft:#aab2c2;
+  --muted:#6d7688; --amber:#f5a623; --teal:#4be3c3; --orange:#ff8a3d;
+  --line:rgba(232,235,242,.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--soft);font-family:'Space Grotesk',system-ui,sans-serif;font-weight:500;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:2px}
+h1,h2,h3{color:var(--paper);font-weight:700;letter-spacing:-.02em;margin:0;text-wrap:balance}
+img,video{max-width:100%;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.kick{font-family:'IBM Plex Mono';font-weight:600;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(5,7,13,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:28px;height:64px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:700;font-size:19px;color:var(--paper);letter-spacing:-.01em}
+.brand img{width:30px;height:30px}
+.brand .ai{color:var(--amber)}
+.links{display:flex;gap:24px;margin-left:auto}
+.links a{font-family:'IBM Plex Mono';font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.links a:hover{color:var(--paper)}
+.cta{font-family:'IBM Plex Mono';font-weight:600;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--amber);padding:10px 16px;border-radius:4px;text-decoration:none;white-space:nowrap}
+.cta:hover{filter:brightness(1.07)}
+@media(max-width:840px){.links{display:none}}
+
+/* hero */
+header{position:relative;overflow:hidden}
+#fan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;padding:92px 0 84px}
+.tick{position:absolute;width:22px;height:22px;border:2px solid rgba(232,235,242,.3)}
+.hero h1{font-size:clamp(38px,5.6vw,64px);line-height:1.03;margin:20px 0 22px}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.lead{font-size:clamp(17px,2vw,20px);max-width:46ch;margin:0 0 34px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.ghost{font-family:'IBM Plex Mono';font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);border:1px solid var(--line);padding:11px 16px;border-radius:4px;text-decoration:none}
+.ghost:hover{border-color:var(--muted);color:var(--paper)}
+.hero-media{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.hero-media video{width:100%;height:auto}
+.badge{display:inline-flex;align-items:center;gap:10px;font-family:'IBM Plex Mono';font-weight:600;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(245,166,35,.35);padding:7px 12px;border-radius:100px}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media(max-width:920px){.hero{grid-template-columns:1fr;padding-top:64px}}
+
+/* ticker */
+.ticker{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--panel)}
+.ticker-in{display:flex;gap:0;width:max-content;animation:scroll 55s linear infinite}
+.ticker:hover .ticker-in{animation-play-state:paused}
+.tk{display:flex;align-items:center;gap:12px;padding:13px 28px;font-family:'IBM Plex Mono';font-size:13px;color:var(--soft);white-space:nowrap;border-right:1px solid var(--line)}
+.tk::before{content:"";width:6px;height:6px;background:var(--amber)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* sections */
+section{padding:84px 0;border-top:1px solid var(--line)}
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.eyebrow::before{content:"";width:8px;height:8px;background:var(--amber)}
+.h2{font-size:clamp(26px,3.4vw,36px);margin-bottom:16px}
+.say{max-width:62ch}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* engine */
+.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:26px 26px 24px;position:relative}
+.step .sn{font-family:'IBM Plex Mono';font-weight:600;font-size:12px;letter-spacing:.2em;color:var(--amber)}
+.step h3{font-size:20px;margin:12px 0 10px}
+.step p{margin:0;font-size:15px;color:var(--muted);line-height:1.55}
+@media(max-width:840px){.pipe{grid-template-columns:1fr}}
+
+/* services */
+.svc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px;margin-top:44px}
+.svc{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;text-decoration:none;transition:border-color .25s ease,transform .25s ease}
+.svc:hover{border-color:rgba(245,166,35,.45);transform:translateY(-3px)}
+.svc img{width:100%;height:auto;border-bottom:1px solid var(--line)}
+.svc figcaption{display:grid;grid-template-columns:1fr auto;gap:4px 14px;padding:16px 18px;align-items:baseline}
+.svc .sn{font-family:'IBM Plex Mono';font-weight:600;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper)}
+.svc .sp{font-family:'IBM Plex Mono';font-weight:600;font-size:13px;color:var(--amber)}
+.svc .sd{grid-column:1/-1;font-size:14.5px;color:var(--muted);line-height:1.5}
+figure{margin:0}
+@media(max-width:840px){.svc-grid{grid-template-columns:1fr}}
+
+/* proof */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:40px 0 14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px}
+.stat .sv{font-family:'IBM Plex Mono';font-weight:600;font-size:38px;color:var(--paper);letter-spacing:-.02em}
+.stat .sv em{font-style:normal;color:var(--amber)}
+.stat .sl{font-family:'IBM Plex Mono';font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.note{font-size:13.5px;color:var(--muted);max-width:72ch}
+.txs{border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:44px}
+.tx{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 20px;text-decoration:none;border-top:1px solid var(--line)}
+.tx:first-child{border-top:none}
+.tx:hover{background:var(--panel)}
+.txl{color:var(--paper);font-size:15px}
+.txh{font-family:'IBM Plex Mono';color:var(--amber);font-size:12.5px}
+@media(max-width:840px){.stats{grid-template-columns:repeat(2,1fr)}.txh{display:none}}
+
+/* builders */
+.code{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:24px;overflow-x:auto;margin-top:36px}
+.code pre{margin:0;font-family:'IBM Plex Mono';font-size:13.5px;line-height:1.75;color:var(--soft)}
+.code .c{color:var(--muted)} .code .a{color:var(--amber)} .code .t{color:var(--teal)}
+.endpoints{width:100%;border-collapse:collapse;margin-top:36px;font-size:14.5px}
+.endpoints th{font-family:'IBM Plex Mono';font-weight:600;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+.endpoints td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--soft)}
+.endpoints td:first-child{font-family:'IBM Plex Mono';font-size:13px;color:var(--paper)}
+.endpoints td:nth-child(2){font-family:'IBM Plex Mono';color:var(--amber)}
+.tblwrap{overflow-x:auto}
+
+footer{border-top:1px solid var(--line);padding:44px 0 64px}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.foot a{color:var(--muted);text-decoration:none}
+.foot a:hover{color:var(--paper)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap nav-in">
+  <a class="brand" href="#top"><img src="/assets/img/optic-mark.svg" alt=""> OPTIC A<span class="ai">I</span></a>
+  <div class="links">
+    <a href="#engine">How it works</a>
+    <a href="#services">Services</a>
+    <a href="#proof">Proof</a>
+    <a href="#builders">For builders</a>
+  </div>
+  <a class="cta" href="https://www.okx.ai/agents" target="_blank" rel="noopener">Use on OKX.AI</a>
+</div></nav>
+
+<header id="top">
+  <canvas id="fan" aria-hidden="true"></canvas>
+  <div class="wrap hero">
+    <div class="tick" style="top:26px;left:28px;border-width:2px 0 0 2px"></div>
+    <div class="tick" style="bottom:26px;right:28px;border-width:0 2px 2px 0"></div>
+    <div>
+      <span class="badge">Live on OKX.AI · Agent #4380</span>
+      <h1>The edge was never inside one market. It's in the gap <em>between them.</em></h1>
+      <p class="lead">Optic AI reads memecoins, prediction markets, tokenized stocks and social attention as one connected economy — does the research behind the numbers, and shows you exactly where the venues diverge.</p>
+      <div class="hero-ctas">
+        <a class="cta" href="https://www.okx.ai/agents" target="_blank" rel="noopener">Use it on OKX.AI</a>
+        <a class="ghost" href="#services">See the services</a>
+      </div>
+    </div>
+    <div class="hero-media">
+      <video muted loop playsinline preload="metadata" poster="/assets/img/poster.jpg" aria-label="15 second Optic AI overview">
+        <source src="/assets/video/listed.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><div class="ticker-in" id="tape"></div></div>
+
+<section id="engine"><div class="wrap">
+  <div class="eyebrow reveal"><span class="kick">One engine, every venue</span></div>
+  <h2 class="h2 reveal">Markets disagree. That disagreement is the signal.</h2>
+  <p class="say reveal">Every venue prices the same story differently — the chart, the odds, the crowd, the news. Single-domain agents read one and call it truth. Optic reads them together and reports the gap.</p>
+  <div class="pipe">
+    <div class="step reveal"><div class="sn">01 · READ</div><h3>Every venue at once</h3><p>OKX Trenches for onchain, Polymarket for outcomes, OKX xStocks for equities, OKX Social for attention — one query fans out across all of them.</p></div>
+    <div class="step reveal"><div class="sn">02 · RESEARCH</div><h3>The homework behind the numbers</h3><p>Live web research — form, injuries, earnings, catalysts — so a read is never just a volume printout. Sources cited on every brief.</p></div>
+    <div class="step reveal"><div class="sn">03 · DIVERGE</div><h3>Score the gap</h3><p>A 0–100 divergence score, a decisive verdict line, and a shareable card. Observational language, never a trade instruction.</p></div>
+  </div>
+</div></section>
+
+<section id="services"><div class="wrap">
+  <div class="eyebrow reveal"><span class="kick">Seven services · pay per call</span></div>
+  <h2 class="h2 reveal">One query, one price, the full picture.</h2>
+  <p class="say reveal">Every read settles on-chain via x402 on X Layer and returns a JSON verdict plus a card. No subscriptions, no tiers to decode. These cards are real output.</p>
+  <div class="svc-grid">
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/read.jpg" alt="Cross-venue read sample card"><figcaption><span class="sn">Cross-Venue Read</span><span class="sp">0.5 USDT</span><span class="sd">Any token or narrative, read across every market at once and scored for divergence.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/daily.jpg" alt="Daily alpha sample card"><figcaption><span class="sn">Daily Alpha</span><span class="sp">0.5 USDT</span><span class="sd">Decisive, research-backed picks across prediction markets, meme momentum and supply risk.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/edge.jpg" alt="Edge radar sample card"><figcaption><span class="sn">Edge Radar</span><span class="sp">0.5 USDT</span><span class="sd">Where today's prices look soft or rich against the actual form, injuries and facts.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/stocks.jpg" alt="Stocks desk sample card"><figcaption><span class="sn">Stocks Desk</span><span class="sp">0.5 USDT</span><span class="sd">OKX tokenized equities read against real research and the analyst consensus.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/rug.jpg" alt="Rug radar sample card"><figcaption><span class="sn">Rug Radar</span><span class="sp">0.05 USDT</span><span class="sd">A 0–100 token safety score with the receipts: holder clusters, dev history, LP status.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/smart.jpg" alt="Smart money sample card"><figcaption><span class="sn">Smart Money</span><span class="sp">0.05 USDT</span><span class="sd">The tokens sharp onchain wallets are accumulating, before the crowd notices.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents" target="_blank" rel="noopener"><figure><img loading="lazy" src="/assets/img/timing.jpg" alt="Narrative timing sample card"><figcaption><span class="sn">Narrative Timing</span><span class="sp">0.05 USDT</span><span class="sd">Early or late — where any token sits in its lifecycle, from igniting to cooling.</span></figcaption></figure></a>
+  </div>
+</div></section>
+
+<section id="proof"><div class="wrap">
+  <div class="eyebrow reveal"><span class="kick">Live proof · not screenshots</span></div>
+  <h2 class="h2 reveal">Every pick tracked. Every payment on-chain.</h2>
+  <p class="say reveal">Optic never claims a win rate. It logs every prediction it surfaces and scores them publicly as markets resolve — and every read it has ever sold settled as a real transaction on X Layer.</p>
+  <div class="stats" id="tr-stats">
+    <div class="stat reveal"><div class="sv num" id="tr-total">—</div><div class="sl">Picks tracked</div></div>
+    <div class="stat reveal"><div class="sv num" id="tr-open">—</div><div class="sl">Open · awaiting resolution</div></div>
+    <div class="stat reveal"><div class="sv num" id="tr-resolved">—</div><div class="sl">Resolved</div></div>
+    <div class="stat reveal"><div class="sv num" id="tr-hit">—</div><div class="sl">Hit rate · scored on-chain</div></div>
+  </div>
+  <p class="note reveal">Pulled live from <a class="mono" href="/v1/track-record">/v1/track-record</a> — a calibration record, not a claim to beat the market.</p>
+  <div class="txs reveal">
+    <a class="tx" href="https://web3.okx.com/explorer/x-layer/tx/0xfa7f00f3810369e5246d645d8d5282c14f6620d9a45655f24d8ef93b465da106" target="_blank" rel="noopener"><span class="txl">First paid read settled</span><span class="txh">0xfa7f00f3…65da106 ↗</span></a>
+    <a class="tx" href="https://web3.okx.com/explorer/x-layer/tx/0x24f7208de6eb4b4fbcbae286b0c4d43bac863740290a1943e32954f1dac53842" target="_blank" rel="noopener"><span class="txl">Daily Alpha, paid &amp; delivered</span><span class="txh">0x24f7208d…ac53842 ↗</span></a>
+    <a class="tx" href="https://web3.okx.com/explorer/x-layer/tx/0x8a8825f0fc5276673e35bd43f27c656a1a8fd07b2fc50bc672eb71d4379501a1" target="_blank" rel="noopener"><span class="txl">Stocks Desk, paid &amp; delivered</span><span class="txh">0x8a8825f0…4379501a1 ↗</span></a>
+    <a class="tx" href="https://web3.okx.com/explorer/x-layer/tx/0x126e530e9e26a3c40317046b6b8d9bf7d1fd8325b299d5e46e4fa08e290c7e46" target="_blank" rel="noopener"><span class="txl">Smart Money, paid &amp; delivered</span><span class="txh">0x126e530e…8e290c7e46 ↗</span></a>
+    <a class="tx" href="https://web3.okx.com/explorer/x-layer/tx/0xfd2716c08275c1b1e0735c09314334481d92583de3a20671f971bc7fb18fe3b0" target="_blank" rel="noopener"><span class="txl">Optic paying another agent — it buys, too</span><span class="txh">0xfd2716c0…7fb18fe3b0 ↗</span></a>
+  </div>
+</div></section>
+
+<section id="builders"><div class="wrap">
+  <div class="eyebrow reveal"><span class="kick">For agents &amp; builders</span></div>
+  <h2 class="h2 reveal">Your agent can buy a read in three requests.</h2>
+  <p class="say reveal">Every service is a standard x402 endpoint — unpaid calls return a <span class="mono">402</span> challenge, signed replays settle on X Layer. No API keys, no accounts. If your agent holds USDT, it's a customer.</p>
+  <div class="code reveal"><pre><span class="c"># 1 — call it. unpaid requests return a 402 payment challenge</span>
+curl -i -X POST <span class="t">https://optic-production-5675.up.railway.app/v1/rug</span> \
+  -H "Content-Type: application/json" -d '{"query":"&lt;token&gt;"}'
+
+<span class="c"># 2 — sign the challenge with an OKX agentic wallet</span>
+onchainos payment pay --payload <span class="a">"&lt;PAYMENT-REQUIRED header value&gt;"</span>
+
+<span class="c"># 3 — replay with the signature. verdict + card return, payment settles on-chain</span>
+curl -X POST <span class="t">…/v1/rug</span> -H <span class="a">"PAYMENT-SIGNATURE: &lt;authorization_header&gt;"</span> \
+  -H "Content-Type: application/json" -d '{"query":"&lt;token&gt;"}'</pre></div>
+  <div class="tblwrap reveal"><table class="endpoints">
+    <thead><tr><th>Endpoint</th><th>Price</th><th>Input</th></tr></thead>
+    <tbody>
+      <tr><td>POST /v1/read</td><td>0.5</td><td>token address, ticker, or a narrative in plain words</td></tr>
+      <tr><td>POST /v1/daily</td><td>0.5</td><td>none — returns today's picks</td></tr>
+      <tr><td>POST /v1/edge</td><td>0.5</td><td>none — returns today's mispricing scan</td></tr>
+      <tr><td>POST /v1/stocks</td><td>0.5</td><td>stock ticker or company name</td></tr>
+      <tr><td>POST /v1/rug</td><td>0.05</td><td>token address or ticker</td></tr>
+      <tr><td>POST /v1/smart-money</td><td>0.05</td><td>none — returns current accumulation</td></tr>
+      <tr><td>POST /v1/timing</td><td>0.05</td><td>token address or ticker</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<footer><div class="wrap foot">
+  <span>OPTIC AI · OKX.AI AGENT #4380 · SETTLES x402 ON X LAYER</span>
+  <span>DATA &amp; ANALYSIS — NOT FINANCIAL ADVICE</span>
+</div></footer>
+
+<script>
+// verdict tape — real output from paid reads
+(function(){
+  var reads = [
+    "france to advance at 59.6% — the day's cleanest call",
+    "smart money is loading ANSEM: 34 wallets, $96.7K before the crowd",
+    "LUZAI: risk 54/100 — dev holds 57.7% of supply",
+    "NVDAx $194 vs consensus ~$302 — research ahead of price",
+    "venues 95% sure trump shows at the world cup — $TRUMP oversold, RSI 31",
+    "pepe: cooling — hotness 30.4 and fading",
+    "BTC $62.6K: polymarket's $62K line at 86.5%, +10pts in 24h",
+    "spain's win price at 29.9% looks mildly soft — full squad returning"
+  ];
+  var tape = document.getElementById('tape');
+  var html = reads.map(function(r){return '<span class="tk">'+r+'</span>'}).join('');
+  tape.innerHTML = html + html; // duplicate for seamless loop
+})();
+
+// live track record
+fetch('/v1/track-record').then(function(r){return r.json()}).then(function(d){
+  var set=function(id,v){document.getElementById(id).textContent=v};
+  set('tr-total', d.total ?? '—');
+  set('tr-open', d.open ?? '—');
+  set('tr-resolved', d.resolved ?? '—');
+  document.getElementById('tr-hit').innerHTML = d.hit_rate != null ? '<em>'+Math.round(d.hit_rate*100)+'%</em>' : '<em>—</em>';
+}).catch(function(){});
+
+// scroll reveals — with a failsafe so content is never left hidden
+// (screenshot bots, previews, and any IO quirk see the full page)
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+    els.forEach(function(el){el.classList.add('in')});
+    return;
+  }
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.12});
+  els.forEach(function(el){io.observe(el)});
+  setTimeout(function(){ els.forEach(function(el){el.classList.add('in')}); }, 1500);
+})();
+
+// hero video: autoplay only if motion allowed
+(function(){
+  var v = document.querySelector('.hero-media video');
+  if (v && !matchMedia('(prefers-reduced-motion: reduce)').matches) { v.autoplay = true; v.play().catch(function(){}); }
+})();
+
+// divergence fan canvas — ambient, brand motif
+(function(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var c = document.getElementById('fan'), x = c.getContext('2d');
+  function size(){ c.width = c.offsetWidth * devicePixelRatio; c.height = c.offsetHeight * devicePixelRatio; }
+  size(); addEventListener('resize', size);
+  var t0 = performance.now();
+  (function draw(now){
+    var t = (now - t0) / 1000, w = c.width, h = c.height, s = devicePixelRatio;
+    x.clearRect(0,0,w,h);
+    var ox = w*0.52, oy = h*0.78;
+    var p = Math.min(1, t/2.2);
+    var ease = 1 - Math.pow(1-p, 3);
+    // incoming line
+    x.strokeStyle = 'rgba(232,235,242,.16)'; x.lineWidth = 2.5*s; x.beginPath();
+    x.moveTo(ox - w*0.6*ease, oy + h*0.06*ease); x.lineTo(ox, oy); x.stroke();
+    // diverging rays with slow breathing
+    var br = Math.sin(t*0.6)*0.02;
+    x.strokeStyle = 'rgba(245,166,35,.30)'; x.beginPath();
+    x.moveTo(ox, oy); x.lineTo(ox + w*0.55*ease, oy - h*(0.52+br)*ease); x.stroke();
+    x.strokeStyle = 'rgba(109,118,136,.22)'; x.beginPath();
+    x.moveTo(ox, oy); x.lineTo(ox + w*0.5*ease, oy - h*(0.1-br)*ease); x.stroke();
+    x.fillStyle = 'rgba(245,166,35,.75)'; x.beginPath(); x.arc(ox, oy, 5*s, 0, 7); x.fill();
+    requestAnimationFrame(draw);
+  })(t0);
+})();
+</script>
+</body>
+</html>
