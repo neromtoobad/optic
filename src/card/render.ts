@@ -59,6 +59,12 @@ const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;"
 
 const trunc = (s: string, max: number): string => (s.length <= max ? s : s.slice(0, max - 1).trimEnd() + "…");
 
+// Length-aware display sizing — long strings step the font down so text always
+// fits inside the fixed 1200x672 card instead of crowding or spilling off it.
+const titleSize = (s: string): number => (s.length > 26 ? 40 : s.length > 18 ? 48 : 56);
+const verdictSize = (s: string): number => (s.length > 150 ? 16.5 : s.length > 112 ? 18 : 20);
+const statSize = (s: string): number => (s.length > 19 ? 21 : s.length > 12 ? 26 : 32);
+
 const title = (v: AnyVerdict): string => {
   if (v.resolved.type === "scan") return "Market scan";
   if (v.resolved.type === "daily") return "Today's alpha";
@@ -423,9 +429,9 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
     </div>
 
     <div style="display:flex;margin-top:44px;">
-      <div style="display:flex;flex-direction:column;flex:1;padding-right:40px;">
-        <div style="display:flex;font-size:56px;line-height:1.05;font-weight:700;letter-spacing:-1px;">${esc(title(v))}</div>
-        <div style="display:flex;margin-top:20px;font-size:20px;line-height:1.5;color:#aab2c2;max-width:560px;">${esc(trunc(v.verdict_line, 170))}</div>
+      <div style="display:flex;flex-direction:column;flex:1;padding-right:40px;overflow:hidden;">
+        <div style="display:flex;font-size:${titleSize(title(v))}px;line-height:1.05;font-weight:700;letter-spacing:-1px;">${esc(title(v))}</div>
+        <div style="display:flex;margin-top:20px;font-size:${verdictSize(trunc(v.verdict_line, 170))}px;line-height:1.5;color:#aab2c2;max-width:560px;max-height:150px;overflow:hidden;">${esc(trunc(v.verdict_line, 170))}</div>
       </div>
       <div style="display:flex;flex-direction:column;width:300px;align-items:flex-end;">
         ${
@@ -463,10 +469,10 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
       ${chips
         .map(
           (c, i) => `
-        <div style="display:flex;flex-direction:column;flex:1;padding:22px ${i < 2 ? "36px" : "0"} 0 ${i > 0 ? "36px" : "0"};${i > 0 ? "border-left:1px solid rgba(255,255,255,.14);" : ""}">
-          <div style="display:flex;align-items:center;font-family:'IBM Plex Mono';font-size:12px;letter-spacing:3px;color:${MUTE};"><div style="display:flex;width:7px;height:7px;margin-right:10px;background-color:${AMBER};"></div>${esc(c.lens.toUpperCase())}</div>
-          <div style="display:flex;font-family:'IBM Plex Mono';font-size:32px;font-weight:600;margin-top:8px;color:${c.color};">${esc(c.stat)}</div>
-          <div style="display:flex;font-size:14px;color:${SUB};margin-top:5px;">${esc(c.sub)}</div>
+        <div style="display:flex;flex-direction:column;flex:1;padding:22px ${i < 2 ? "36px" : "0"} 0 ${i > 0 ? "36px" : "0"};${i > 0 ? "border-left:1px solid rgba(255,255,255,.14);" : ""}overflow:hidden;">
+          <div style="display:flex;align-items:center;font-family:'IBM Plex Mono';font-size:12px;letter-spacing:3px;color:${MUTE};max-height:34px;overflow:hidden;"><div style="display:flex;width:7px;height:7px;margin-right:10px;background-color:${AMBER};"></div>${esc(c.lens.toUpperCase())}</div>
+          <div style="display:flex;font-family:'IBM Plex Mono';font-size:${statSize(c.stat)}px;line-height:1.15;font-weight:600;margin-top:8px;color:${c.color};max-height:76px;overflow:hidden;">${esc(c.stat)}</div>
+          <div style="display:flex;font-size:14px;line-height:1.45;color:${SUB};margin-top:5px;max-height:42px;overflow:hidden;">${esc(c.sub)}</div>
         </div>`
         )
         .join("")}
