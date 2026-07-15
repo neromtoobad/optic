@@ -153,3 +153,12 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
     Jul 12: sales concentrate in 2 food-photo agents; ~12 fortune-tellers at 0 sold; nothing
     crypto-native, nothing with a shareable card). Listing as a separate agent so OPTIC's approved
     listing is untouched.
+
+- **Jul 15, 2026 — marketplace page public: 5.0 score · 100% positive · 39 sold · first external review**
+  - Public page live at https://www.okx.ai/agents/4380 — all 7 services with "Use now" buttons.
+  - Metrics shown (captured this date): **Score 5.0 ★ · Positive 100% · Sold 39 · 1 review (5★)**.
+  - First organic external review, from "Drained99" (2 days prior): *"Delivered Narrative Timing for
+    ETH successfully via x402. Smooth execution."* — a real third-party buyer, not a self-purchase.
+  - Dated screenshot: [media-kit/proof/okx-listing-2026-07-15.png](media-kit/proof/okx-listing-2026-07-15.png)
+  - Marketing site (served from the API origin, all CTAs deep-link to the listing):
+    https://optic-production-5675.up.railway.app/
