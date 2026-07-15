@@ -33,7 +33,7 @@ Map each block to the matching form field. Nothing here is made up — every cla
 - **Smart Money** (0.05) — what sharp wallets are buying right now
 - **Narrative Timing** (0.05) — is a token's story early or already over
 
-**Website:** https://optic-production-5675.up.railway.app
+**Website:** https://optic-ai.xyz (custom domain; same app also serves https://optic-production-5675.up.railway.app)
 
 **Live API:** same origin — `GET /v1/health` (free) · `GET /v1/track-record` (free, the public pick record) · paid: `POST /v1/read` · `/v1/daily` · `/v1/edge` · `/v1/stocks` · `/v1/rug` · `/v1/smart-money` · `/v1/timing`
 
