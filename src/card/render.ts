@@ -95,7 +95,7 @@ function verdictChips(v: Verdict): Chip[] {
       color: "#4be3c3",
       sub: meme
         ? `${fmtPct(meme.chg_24h, true)} 24h · liq ${fmtUsd(meme.liquidity)}`
-        : "no onchain venue for this story",
+        : "no onchain market for this story",
     },
     {
       lens: "prediction · polymarket",
@@ -321,7 +321,8 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
   const isTiming = !isStock && !isTouch && has("timing") && !has("risk") && !has("venues");
 
   // Hero panel for the "big number" modes (verdict / stock / rug / timing).
-  let heroLabel = "DIVERGENCE";
+  // "GAP" = the divergence score, in plain language (how far apart the markets are).
+  let heroLabel = "GAP";
   let heroNum: number | null = null;
   let heroSuffix = "/100";
   let heroDir: string | null = null;
@@ -384,14 +385,14 @@ function template(v: AnyVerdict): ReturnType<typeof html> {
         : isSmart
           ? "smart money · accumulation"
           : isStock
-            ? "stocks desk · cross-venue"
+            ? "stocks desk · cross-market"
             : isTouch
               ? "onchain wellness · 90d read"
               : isRug
                 ? "rug radar · safety scan"
                 : isTiming
                   ? "narrative timing · lifecycle"
-                  : "cross-venue read";
+                  : "cross-market read";
   const scanTop = isScan ? (v as ScanVerdict).scan.rising[0] : null;
   const tipCount = isDaily
     ? (v as DailyVerdict).tips.length

@@ -41,24 +41,24 @@ const SYNTH_SCHEMA = {
     divergence: {
       type: "object",
       properties: {
-        score: { type: "number", description: "0-100: how much the venues disagree about the company's outlook." },
+        score: { type: "number", description: "0-100: how much the markets disagree about the company's outlook." },
         direction: { type: "string", description: "Short tag, e.g. 'onchain lagging', 'in agreement', 'research ahead of price'." },
         one_liner: { type: "string", description: "One observational sentence naming the divergence." },
-        reasoning: { type: "array", items: { type: "string" }, description: "2-4 observational bullets citing the numbers/venues." },
+        reasoning: { type: "array", items: { type: "string" }, description: "2-4 observational bullets citing the numbers/markets." },
       },
       required: ["score", "direction", "one_liner", "reasoning"],
       additionalProperties: false,
     },
-    verdict_line: { type: "string", description: "One observational sentence: the cross-venue read on this company. Where do the OKX tokenized price, the equity research, and any prediction market agree or diverge?" },
+    verdict_line: { type: "string", description: "One observational sentence: the cross-market read on this company. Where do the OKX tokenized price, the equity research, and any prediction market agree or disagree?" },
   },
   required: ["market_snapshot", "analyst_consensus", "catalysts", "divergence", "verdict_line"],
   additionalProperties: false,
 } as const;
 
 const SYNTH_SYSTEM =
-  "You are OPTIC's stocks desk. You read one company across venues: OKX's on-chain tokenized share (xStock) price, real-world equity research, and any prediction market on the company. Report the MAP — where the venues AGREE and where they DIVERGE about the same company. " +
+  "You are OPTIC's stocks desk. You read one company across markets: OKX's on-chain tokenized share (xStock) price, real-world equity research, and any prediction market on the company. Report the MAP — where those markets AGREE and where they DISAGREE about the same company. Plain words: say \"market(s)\", never \"venue(s)\"; say markets \"agree/disagree\" or \"lag\", never \"diverge\". " +
   "This is a DATA product, NOT financial advice. NEVER say buy, sell, hold, long, short, or tell anyone what to do. You may REPORT the sell-side analyst consensus and price target as attributed data, but never issue or endorse a target yourself. Language is observational only: priced-in, lagging, diverging, crowded, catalyst-ahead. " +
-  "Divergence score 0-100 = how much the venues disagree about the company's outlook. If a venue is missing, that absence is itself signal (e.g. 'no prediction market is pricing this'). Use only the facts provided; do not invent prices or numbers.";
+  "Gap score 0-100 = how much the markets disagree about the company's outlook. If a market is missing, that absence is itself signal (e.g. 'no prediction market is pricing this'). Use only the facts provided; do not invent prices or numbers.";
 
 /** Find the OKX-listed xStock for a ticker and pull its on-chain price. */
 async function findXStock(ticker: string, budget: BudgetGuard): Promise<StockRead["tokenized"]> {
@@ -132,7 +132,7 @@ export async function stockRead(query: string, budget: BudgetGuard): Promise<Sto
       stock: null,
       prediction: null,
       research: null,
-      verdict_line: `${ticker}: no OKX tokenized share, prediction market, or fresh research surfaced right now — nothing to read across venues.`,
+      verdict_line: `${ticker}: no OKX tokenized share, prediction market, or fresh research surfaced right now — nothing to read across markets.`,
       generated_at: now(),
       card_url: null,
     };
