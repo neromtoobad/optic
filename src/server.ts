@@ -14,6 +14,9 @@ const app = new Hono<{ Variables: { paidTx?: string } }>();
 // track-record fetch and card links need no CORS. optic.xyz-style custom domains
 // attach to this same service later without touching the registered endpoints.
 app.get("/", serveStatic({ path: "./site/index.html" }));
+// Agent-facing API docs. Served from the same origin as the endpoints they
+// describe, so every example on the page is copy-pasteable as-is.
+app.get("/docs", serveStatic({ path: "./site/docs.html" }));
 app.use("/assets/*", serveStatic({ root: "./site" }));
 
 app.get("/v1/health", (c) =>
