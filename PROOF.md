@@ -162,3 +162,18 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Dated screenshot: [media-kit/proof/okx-listing-2026-07-15.png](media-kit/proof/okx-listing-2026-07-15.png)
   - Marketing site (served from the API origin, all CTAs deep-link to the listing):
     https://optic-production-5675.up.railway.app/
+
+- **Jul 19, 2026 — AGENT REEL: second ASP registered one-shot, verification clean, in review**
+  - New agent **#6731 "Agent Reel"** — a separate Art-creation studio, distinct from Optic AI (#4380) —
+    registered in a single `create` (tx `0x3174df345e656fc7cce17269dcdf82aec3dfbf908e13fac43de52317179f316f`)
+    with all five services: Agent Promo Reel 0.5 (custom briefs supported — any human brand, not just
+    listed agents), Hero Image Studio 0.1, Brand Kit Builder 0.1, Image Restyler 0.1, Mint Package Forge 0.1.
+  - Own infrastructure: dedicated Railway service `agent-reel` (same repo/image) at
+    https://agent-reel-production.up.railway.app with its own /data volume — endpoints fully distinct from
+    Optic's, and Chromium render load isolated from Optic's paid reads.
+  - Listing QA: `validate-listing` pass with zero findings, first attempt. Activation oracle:
+    `rejectReason: null`, first attempt — the one-shot registration rule held (no updates, no resubmits).
+    `submitApproval` succeeded; listing now in the review queue alongside Optic's service-update review.
+  - Custom-brief reel proven pre-registration: "Nerom Studio" brief (name + words + image + 3 highlights
+    + cta) → palette read from the supplied image, honest tagline from their own words, kind-aware beats
+    ("Highlights", "Made to be seen.", branded outro) — rendered MP4 on the first pass.
