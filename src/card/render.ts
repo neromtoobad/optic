@@ -67,7 +67,10 @@ const statSize = (s: string): number => (s.length > 19 ? 21 : s.length > 12 ? 26
 
 const title = (v: AnyVerdict): string => {
   if (v.resolved.type === "scan") return "Market scan";
-  if (v.resolved.type === "daily") return "Today's alpha";
+  // Daily: a bespoke name (e.g. an event-day special "OPTIC'S CALL: …") takes the
+  // headline; the pipeline's generic "daily alpha" keeps the standard title.
+  if (v.resolved.type === "daily")
+    return v.resolved.name && v.resolved.name !== "daily alpha" ? trunc(v.resolved.name, 44) : "Today's alpha";
   if (v.resolved.type === "edge") return "Edge radar";
   if (v.resolved.type === "smartmoney") return "Smart money";
   if (v.resolved.type === "stock") return trunc(((v as StockVerdict).stock?.ticker ?? v.resolved.name).toUpperCase(), 40);
