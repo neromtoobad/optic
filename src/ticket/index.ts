@@ -18,9 +18,10 @@ import {
   type EventsBook,
 } from "./events.js";
 import { buildPluginRail, isUpdownQuery, resolveUpdown, updownCoin, type PluginRail } from "./updown.js";
+import { buildSportsRail, resolveSportsMarket, type SportsRail } from "./sports.js";
 
 export interface Ticket {
-  venue: "okx-events" | "polymarket-updown";
+  venue: "okx-events" | "polymarket-updown" | "polymarket";
   settlement: "USDT" | "USDC";
   economics: {
     outcome: string;
@@ -30,7 +31,7 @@ export interface Ticket {
     usdt_at_risk: number;
   };
   draft: EventOrderDraft | null; // OKX rail: the caller submits with their own OKX API key
-  plugin_rail: PluginRail | null; // buyer-rails execution via OKX's polymarket-plugin
+  plugin_rail: PluginRail | SportsRail | null; // buyer-rails execution via OKX's polymarket-plugin
 }
 
 export interface TicketVerdict {
@@ -120,6 +121,51 @@ function updownTicket(p: TicketParams, market: import("./updown.js").UpdownMarke
   };
 }
 
+/** Ticket on the general Polymarket lane (sports/elections/any Yes-No market). */
+function sportsTicket(p: TicketParams, market: import("./sports.js").SportsMarket): TicketVerdict {
+  const rail = buildSportsRail(market, p.side, p.usdt);
+  const yes = market.yes_price;
+  const price = p.side === "yes" ? (yes ?? 0.5) : yes !== null ? Number((1 - yes).toFixed(3)) : 0.5;
+  const contracts = Number((p.usdt / Math.max(price, 0.01)).toFixed(2));
+  const ticket: Ticket = {
+    venue: "polymarket",
+    settlement: "USDC",
+    economics: {
+      outcome: rail.outcome,
+      inst_id: market.condition_id,
+      limit_price: price,
+      contracts,
+      usdt_at_risk: p.usdt,
+    },
+    draft: null,
+    plugin_rail: rail,
+  };
+  const ticketId = randomUUID();
+  db.prepare(
+    "INSERT INTO event_ticket (id, inst_id, question, outcome, limit_price, usdt, created_at) VALUES (?,?,?,?,?,?,?)",
+  ).run(ticketId, market.condition_id, market.question, rail.outcome, price, p.usdt, now());
+  return {
+    ticket_id: ticketId,
+    query: p.query,
+    resolved: {
+      type: "event_contract",
+      inst_id: market.condition_id,
+      series_id: "POLYMARKET",
+      question: market.question,
+      expiry_ms: market.end_date ? Date.parse(market.end_date) || null : null,
+      state: market.accepting_orders ? "live" : "closed",
+      vol_24h: market.volume_24h,
+    },
+    book: null,
+    ticket,
+    verdict_line:
+      `Ticket constructed: ${rail.outcome} on "${market.question}" — ` +
+      `${p.usdt} USDC via your own OKX polymarket-plugin. ` +
+      `Run the included command with your agentic wallet; the plugin's own confirmation gates apply.`,
+    generated_at: now(),
+  };
+}
+
 function fail(query: string, line: string): TicketVerdict {
   return {
     ticket_id: null,
@@ -144,11 +190,17 @@ export async function planTicket(p: TicketParams): Promise<TicketVerdict> {
   }
 
   const contract = await resolveEventContract(p.query);
-  if (!contract)
+  if (!contract) {
+    // Sports / elections / general markets: the plugin rail covers Polymarket's whole
+    // Yes/No catalogue. Tried after the OKX venue so crypto/gold price queries keep
+    // their USDT rail; queries with no tradable asset land here naturally.
+    const sports = await resolveSportsMarket(p.query);
+    if (sports) return sportsTicket(p, sports);
     return fail(
       p.query,
-      `No live market matches "${p.query}" — name the asset and condition, e.g. "BTC above 60000 today", "gold hits 4500 this month", or "BTC next 5 min".`,
+      `No live market matches "${p.query}" — try an asset condition ("BTC above 60000 today"), a short window ("BTC next 5 min"), or a named event ("spain to win the world cup").`,
     );
+  }
   if (contract.state !== "live")
     return fail(p.query, `"${contract.question}" is not currently tradable (state: ${contract.state}).`);
 
