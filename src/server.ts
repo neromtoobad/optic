@@ -3,7 +3,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
-import { createX402Middleware, READ_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
+import { createX402Middleware, READ_ID_HEADER, TICKET_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
 import type { ForceMode } from "./pipeline/index.js";
 import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
@@ -53,6 +53,10 @@ const NEEDS_QUERY = new Set<ForceMode | "read">(["read", "rug", "timing", "stock
 for (const route of PAID_ROUTES) {
   const mode = route.mode; // undefined = full cross-venue read
   const needsQuery = NEEDS_QUERY.has(mode ?? "read");
+
+  // Ticket Desk is x402-gated (in PAID_ROUTES so the middleware challenges it) but has
+  // its own handler below — it is not a market read, so skip the generic read-loop.
+  if (route.path === "/v1/ticket") continue;
 
   // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
   app.get(route.path, (c) => c.json({ error: "use POST" }, 405));
@@ -111,6 +115,49 @@ app.get("/v1/card/:id", async (c) => {
   const read = getRead(id);
   if (!read) return c.json({ error: "not found" }, 404);
   return c.json({ id: read.id, status: read.status, card_pending: true });
+});
+
+// ── TICKET DESK ────────────────────────────────────────────────────────────
+// Paid, POST-only, x402-gated. Order CONSTRUCTION only: the caller names the market,
+// side and size; the response is the signable payload their own wallet signs. Failures
+// (no such market, dead book) return 4xx BEFORE settlement — never a charge for a
+// ticket that can't exist.
+app.get("/v1/ticket", (c) => c.json({ error: "use POST" }, 405));
+
+app.post("/v1/ticket", paymentMiddleware, async (c) => {
+  let body: Record<string, unknown>;
+  try {
+    body = (await c.req.json()) as Record<string, unknown>;
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  const side = typeof body.side === "string" ? body.side.trim().toLowerCase() : "";
+  const xp = Number(body.xp);
+  const signer = typeof body.signer === "string" ? body.signer.trim() : "";
+  const limit = body.limit === undefined ? undefined : Number(body.limit);
+
+  if (!query || query.length > 300)
+    return c.json({ error: "query is required — an OKX Outcomes event or market question (≤300 chars)" }, 400);
+  if (side !== "yes" && side !== "no")
+    return c.json({ error: "side must be 'yes' or 'no' — the ticket desk constructs, it never chooses" }, 400);
+  if (!Number.isFinite(xp) || xp < 1 || xp > 100_000)
+    return c.json({ error: "xp must be a number between 1 and 100000 (OKX X-Layer Points, the venue base asset)" }, 400);
+  if (!/^0x[0-9a-fA-F]{40}$/.test(signer))
+    return c.json({ error: "signer is required — the X Layer address whose key will sign the order (0x…)" }, 400);
+  if (limit !== undefined && !(limit > 0 && limit < 1))
+    return c.json({ error: "limit, when given, must be between 0 and 1" }, 400);
+
+  const { planTicket } = await import("./ticket/index.js");
+  try {
+    const verdict = await planTicket({ query, side, xp, limit, signer });
+    if (!verdict.ticket) return c.json(verdict, 404); // not constructible → buyer keeps their money
+    if (verdict.ticket_id) c.header(TICKET_ID_HEADER, verdict.ticket_id);
+    return c.json(verdict);
+  } catch (err) {
+    console.error("/v1/ticket failed:", err);
+    return c.json({ error: "ticket construction failed" }, 500);
+  }
 });
 
 // Persistence guard: a mounted volume that the data paths don't point into means

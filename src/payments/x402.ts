@@ -25,10 +25,16 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
   { path: "/v1/timing", price: 0.05, description: "Optic AI narrative timing: early vs late lifecycle for any token", mode: "timing" },
   { path: "/v1/stocks", price: 0.5, description: "Optic AI stocks desk: cross-venue read on a stock — OKX tokenized share (xStock) + equity research + prediction markets", mode: "stocks" },
   { path: "/v1/touchgrass", price: 0.1, description: "TouchGrass onchain wellness: wallet behavior patterns, 0-100 score, personalized touch-grass protocol + shareable card", mode: "touchgrass" },
+  // Ticket Desk — order CONSTRUCTION, never execution: resolves the caller's chosen
+  // OKX Outcomes market, checks the live book, returns the signable payload. The
+  // caller's wallet signs and submits; no key ever touches this server.
+  { path: "/v1/ticket", price: 0.1, description: "Optic AI ticket desk: turns a decided position into a ready-to-sign OKX Outcomes order on X Layer — resolves the event market, checks the live order book, sizes the order, returns the exact signable payload; the caller's own wallet signs and submits.\nProvide: 1. the market (an OKX Outcomes event or question); 2. side (yes or no); 3. size in xp; optional limit price and signer address." },
 ];
 
 /** Header the read handler sets so settlement can attach the tx to the read row. */
 export const READ_ID_HEADER = "x-optic-read-id";
+/** Same, for a paid ticket — settlement records the tx on outcome_ticket. */
+export const TICKET_ID_HEADER = "x-optic-ticket-id";
 
 /** Hono implementation of the SDK's HTTPAdapter (mirrors ExpressAdapter). */
 class HonoAdapter implements HTTPAdapter {
@@ -333,14 +339,21 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
         return;
       }
 
-      // Attach settlement headers (PAYMENT-RESPONSE) + record the tx on the read.
+      // Attach settlement headers (PAYMENT-RESPONSE) + record the tx on the read/ticket.
       const readId = c.res.headers.get(READ_ID_HEADER);
       if (readId && settle.transaction) {
         db.prepare("UPDATE reads SET paid_tx = ? WHERE id = ?").run(settle.transaction, readId);
         console.log(`read ${readId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
       }
+      const ticketId = c.res.headers.get(TICKET_ID_HEADER);
+      if (ticketId && settle.transaction) {
+        const { attachTicketTx } = await import("../ticket/index.js");
+        attachTicketTx(ticketId, settle.transaction);
+        console.log(`ticket ${ticketId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
+      }
       const headers = new Headers(c.res.headers);
       headers.delete(READ_ID_HEADER);
+      headers.delete(TICKET_ID_HEADER);
       for (const [k, v] of Object.entries(settle.headers)) headers.set(k, v);
       c.res = new Response(c.res.body, { status: c.res.status, headers });
     } catch (err) {
