@@ -24,7 +24,8 @@ import { cacheKey, cacheGet, cacheSet } from "../db.js";
 // Outcomes lives on the main OKX REST host (NOT web3.okx.com/onchainos which the
 // Market-API lenses use). Paths below follow the docs-v5/outcomes_en REST section;
 // PIN each against the live doc + official SDK in the deploy env (okx.com is
-// firewalled from the build sandbox). Grouped here so a correction is one edit.
+// firewalled from the build sandbox) — run `npx tsx scripts/outcomes-probe.ts` there,
+// which reports the working paths + real field names. Grouped here so a fix is one edit.
 const BASE = "https://www.okx.com";
 const PATHS = {
   events: "/api/v5/outcomes/public/events", // GET  ?state=active  → [{ eventId, title, markets:[...] }]
