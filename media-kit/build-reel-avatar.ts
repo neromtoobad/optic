@@ -27,7 +27,7 @@ const sprockets = (side: "left" | "right") =>
   [0, 1, 2, 3]
     .map(
       (i) =>
-        `<div style="display:flex;position:absolute;${side}:14px;top:${34 + i * 42}px;width:14px;height:22px;background-color:${BG};border:2px solid rgba(232,235,242,.45);"></div>`
+        `<div style="display:flex;position:absolute;${side}:36px;top:${76 + i * 90}px;width:30px;height:48px;background-color:${BG};border:4px solid rgba(232,235,242,.45);"></div>`
     )
     .join("");
 
@@ -35,24 +35,19 @@ const sprockets = (side: "left" | "right") =>
 const playSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="88" viewBox="0 0 72 88"><polygon points="0,0 72,44 0,88" fill="${AMBER}"/></svg>`;
 const PLAY = `data:image/svg+xml;base64,${Buffer.from(playSvg).toString("base64")}`;
 
+// Text-free, mark-alone (user direction): the film frame IS the avatar — full-bleed,
+// no corner ticks, no words. Small breathing margin so the rounded frame reads on
+// square and circle-cropped surfaces alike.
 const mark = `
-  <div style="display:flex;position:relative;width:236px;height:212px;border:4px solid ${INK};border-radius:18px;background-color:rgba(232,235,242,.03);align-items:center;justify-content:center;">
+  <div style="display:flex;position:relative;width:456px;height:428px;border:9px solid ${INK};border-radius:40px;background-color:rgba(232,235,242,.03);align-items:center;justify-content:center;">
     ${sprockets("left")}
     ${sprockets("right")}
-    <img src="${PLAY}" style="width:72px;height:88px;margin-left:12px;" />
+    <img src="${PLAY}" style="width:150px;height:184px;margin-left:22px;" />
   </div>`;
 
 const tree = `<div style="display:flex;align-items:center;justify-content:center;width:512px;height:512px;background-color:${BG};position:relative;">
-  <div style="display:flex;position:absolute;top:0;left:0;width:512px;height:512px;background-image:radial-gradient(circle at 50% 42%, rgba(245,166,35,.10) 0%, rgba(5,7,13,0) 60%);"></div>
-  ${corner("top:34px;left:34px;border-width:2px 0 0 2px;")}
-  ${corner("top:34px;right:34px;border-width:2px 2px 0 0;")}
-  ${corner("bottom:34px;left:34px;border-width:0 0 2px 2px;")}
-  ${corner("bottom:34px;right:34px;border-width:0 2px 2px 0;")}
-  <div style="display:flex;flex-direction:column;align-items:center;">
-    ${mark}
-    <div style="display:flex;align-items:center;font-family:'Space Grotesk';font-weight:700;font-size:46px;letter-spacing:1px;color:${INK};margin-top:26px;">AGENT<span style="display:flex;color:${AMBER};margin-left:14px;">REEL</span></div>
-    <div style="display:flex;font-family:'IBM Plex Mono';font-size:15px;letter-spacing:5px;color:${MUTE};margin-top:10px;">15S · ANY AGENT</div>
-  </div>
+  <div style="display:flex;position:absolute;top:0;left:0;width:512px;height:512px;background-image:radial-gradient(circle at 50% 50%, rgba(245,166,35,.18) 0%, rgba(5,7,13,0) 64%);"></div>
+  ${mark}
 </div>`;
 
 const svg = await satori(html(tree) as Parameters<typeof satori>[0], { width: 512, height: 512, fonts: FONTS });

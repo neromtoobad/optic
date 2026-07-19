@@ -181,7 +181,13 @@ const Menu: React.FC<{ p: ReelProps }> = ({ p }) => {
           }),
         }}
       >
-        {rows.length === 1 ? "What it does" : `${p.services.length} services`}
+        {p.kind === "custom"
+          ? rows.length === 1
+            ? "What it does"
+            : "Highlights"
+          : rows.length === 1
+            ? "What it does"
+            : `${p.services.length} services`}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 18, width: 1300 }}>
         {rows.map((s, i) => {
@@ -219,16 +225,18 @@ const Menu: React.FC<{ p: ReelProps }> = ({ p }) => {
               >
                 {s.name}
               </span>
-              <span
-                style={{
-                  fontFamily: F.mono,
-                  fontSize: 34,
-                  color: p.accent2,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {s.price} USDT
-              </span>
+              {s.price ? (
+                <span
+                  style={{
+                    fontFamily: F.mono,
+                    fontSize: 34,
+                    color: p.accent2,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {s.price} USDT
+                </span>
+              ) : null}
             </div>
           );
         })}
@@ -250,6 +258,18 @@ const Proof: React.FC<{ p: ReelProps }> = ({ p }) => {
   ].filter(Boolean) as Array<{ n: string; l: string; star: boolean }>;
 
   if (!stats.length) {
+    // Custom brief: no marketplace stats exist — close the thought with the brand
+    // instead of listing language.
+    if (p.kind === "custom") {
+      return (
+        <Beat>
+          <div style={{ fontFamily: F.sans, fontWeight: 700, fontSize: 84, color: "#fff" }}>
+            Made to be seen.
+          </div>
+          <div style={{ fontFamily: F.mono, fontSize: 30, color: p.accent }}>{p.name}</div>
+        </Beat>
+      );
+    }
     return (
       <Beat>
         <div style={{ fontFamily: F.sans, fontWeight: 700, fontSize: 84, color: "#fff" }}>
@@ -345,6 +365,8 @@ const Proof: React.FC<{ p: ReelProps }> = ({ p }) => {
 
 const Call: React.FC<{ p: ReelProps }> = ({ p }) => {
   const frame = useCurrentFrame();
+  const headline = p.kind === "custom" ? p.name : "Hire it on OKX.AI";
+  const sub = p.kind === "custom" ? (p.cta ?? "made with Agent Reel · okx.ai") : `okx.ai/agents/${p.agentId}`;
   return (
     <Beat gap={26}>
       <div
@@ -367,7 +389,7 @@ const Call: React.FC<{ p: ReelProps }> = ({ p }) => {
           ),
         }}
       >
-        Hire it on OKX.AI
+        {headline}
       </div>
       <div
         style={{
@@ -381,7 +403,7 @@ const Call: React.FC<{ p: ReelProps }> = ({ p }) => {
           }),
         }}
       >
-        okx.ai/agents/{p.agentId}
+        {sub}
       </div>
     </Beat>
   );

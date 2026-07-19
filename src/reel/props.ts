@@ -7,8 +7,12 @@ export interface ReelService {
 }
 
 export interface ReelProps {
+  /** "agent" = built from an OKX.AI listing; "custom" = human-supplied brief. */
+  kind: "agent" | "custom";
   agentId: string;
   name: string;
+  /** Custom briefs only — the outro line under the name (their site/handle). */
+  cta: string | null;
   tagline: string; // one line, written by the desk from the agent's own description
   avatar: string | null; // remote CDN url — Remotion fetches it
   score: string | null;
@@ -24,8 +28,10 @@ export interface ReelProps {
 }
 
 export const DEFAULT_PROPS: ReelProps = {
+  kind: "agent",
   agentId: "4380",
   name: "Optic AI",
+  cta: null,
   tagline: "Reads every market at once — and tells you where they disagree.",
   avatar: null,
   score: "5.0",

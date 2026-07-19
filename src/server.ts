@@ -125,22 +125,46 @@ app.get("/v1/card/:id", async (c) => {
 app.get("/v1/reel", (c) => c.json({ error: "use POST" }, 405));
 
 app.post("/v1/reel", paymentMiddleware, async (c) => {
-  let body: { query?: unknown };
+  let body: { query?: unknown; name?: unknown; description?: unknown; image_url?: unknown; highlights?: unknown; cta?: unknown };
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: "invalid JSON body" }, 400);
   }
   const query = typeof body.query === "string" ? body.query.trim() : "";
-  if (!query) return c.json({ error: "query is required — an agent id like 4380, or an okx.ai/agents/… link" }, 400);
+  const isCustom = !query && typeof body.name === "string" && typeof body.description === "string";
+  if (!query && !isCustom)
+    return c.json({ error: "provide query (an agent id like 4380 or an okx.ai/agents/… link) — or name + description (+ optional image_url, highlights, cta) for a custom reel" }, 400);
   if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
 
   const { BudgetGuard } = await import("./pipeline/budget.js");
-  const { planReel, produceReel } = await import("./reel/index.js");
+  const { planReel, planCustomReel, produceReel, CustomBriefError } = await import("./reel/index.js");
+  const { ImageFetchError } = await import("./studio/shared.js");
   const { createJob, markDone, markFailed } = await import("./reel/jobs.js");
   const budget = new BudgetGuard();
 
-  const { verdict, jobId } = await planReel(query, budget);
+  let planned;
+  if (isCustom) {
+    try {
+      planned = await planCustomReel(
+        {
+          name: body.name as string,
+          description: body.description as string,
+          image_url: typeof body.image_url === "string" ? body.image_url : undefined,
+          highlights: Array.isArray(body.highlights) ? (body.highlights as string[]) : undefined,
+          cta: typeof body.cta === "string" ? body.cta.slice(0, 80) : undefined,
+        },
+        budget
+      );
+    } catch (err) {
+      // Bad brief / unfetchable image → 4xx BEFORE settlement; the buyer is not charged.
+      if (err instanceof CustomBriefError || err instanceof ImageFetchError) return c.json({ error: err.message }, 400);
+      throw err;
+    }
+  } else {
+    planned = await planReel(query, budget);
+  }
+  const { verdict, jobId } = planned;
 
   // No agent / bad id → 4xx so the buyer is NOT charged (settlement only runs on <400).
   if (!jobId || !verdict.brief || !verdict.tagline || !verdict.palette) {
@@ -151,7 +175,10 @@ app.post("/v1/reel", paymentMiddleware, async (c) => {
   // gets an immediate reel_pending). The serialised queue in render.ts keeps concurrent
   // reels from fighting Chromium.
   createJob(jobId, verdict.brief.agent_id, verdict.brief.name);
-  produceReel(jobId, verdict.brief, verdict.tagline, verdict.palette)
+  produceReel(jobId, verdict.brief, verdict.tagline, verdict.palette, {
+    kind: isCustom ? "custom" : "agent",
+    cta: isCustom && typeof body.cta === "string" ? body.cta.slice(0, 80) : null,
+  })
     .then(() => markDone(jobId))
     .catch((err) => {
       console.error(`reel ${jobId} render failed:`, err);

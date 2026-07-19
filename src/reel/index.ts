@@ -13,7 +13,7 @@ import { isCliEntry } from "../fixtures.js";
 
 export interface ReelVerdict {
   query: string;
-  resolved: { type: "agent"; agent_id: string; name: string } | null;
+  resolved: { type: "agent"; agent_id: string; name: string } | { type: "custom"; name: string } | null;
   brief: AgentBrief | null;
   tagline: string | null;
   palette: Palette | null;
@@ -95,8 +95,81 @@ export async function produceReel(
   brief: AgentBrief,
   tagline: string,
   palette: Palette,
+  opts: { kind?: "agent" | "custom"; cta?: string | null } = {},
 ): Promise<string> {
-  return renderReel({ jobId, props: briefToProps(brief, tagline, palette) });
+  return renderReel({ jobId, props: briefToProps(brief, tagline, palette, opts) });
+}
+
+// ── Custom briefs — the full reel treatment for anyone, no listing required ──
+
+export interface CustomBrief {
+  name: string;
+  description: string;
+  image_url?: string; // logo / product shot / artwork — palette + mark come from it
+  highlights?: string[]; // 1–3 short lines, rendered where an agent's services go
+  cta?: string; // outro line (site / handle); defaults to the studio credit
+}
+
+export class CustomBriefError extends Error {}
+
+/**
+ * Plan a reel from a human-supplied brief: same pipeline, different spine — the
+ * palette is read from THEIR image, the tagline compresses THEIR words. Everything
+ * the reel says still traces to what the buyer provided; nothing is invented.
+ */
+export async function planCustomReel(
+  custom: CustomBrief,
+  budget: BudgetGuard,
+): Promise<{ verdict: ReelVerdict; jobId: string | null }> {
+  const name = custom.name?.trim() ?? "";
+  const description = custom.description?.trim() ?? "";
+  const highlights = (custom.highlights ?? []).map((h) => String(h).trim()).filter(Boolean).slice(0, 3);
+  if (name.length < 2 || name.length > 60) throw new CustomBriefError("name must be 2–60 chars");
+  if (description.length < 20 || description.length > 1000)
+    throw new CustomBriefError("description must be 20–1000 chars — the tagline is written from it");
+  if (highlights.some((h) => h.length > 48)) throw new CustomBriefError("each highlight must be ≤48 chars");
+
+  // Palette from their image; a bad/missing image falls back to the house palette
+  // rather than failing a paid job — but an unfetchable URL fails BEFORE payment.
+  let palette: Palette = { ...(await import("./palette.js")).DEFAULT_PALETTE };
+  let avatar: string | null = null;
+  if (custom.image_url) {
+    const { fetchImage } = await import("../studio/shared.js");
+    const img = await fetchImage(custom.image_url); // throws ImageFetchError → route 400s, no charge
+    const { paletteFromImage } = await import("./palette.js");
+    palette = (await paletteFromImage(img.bytes)) ?? palette;
+    avatar = custom.image_url;
+  }
+
+  const brief: AgentBrief = {
+    agent_id: "custom",
+    name,
+    description,
+    avatar,
+    score: null,
+    approval_rate: null,
+    sold: 0,
+    services: highlights.map((h) => ({ name: h, price: "", description: "" })),
+    cheapest: null,
+    fetched_at: now(),
+  };
+  const tagline = await writeTagline(brief, budget);
+
+  const jobId = randomUUID();
+  return {
+    jobId,
+    verdict: {
+      query: name,
+      resolved: { type: "custom", name },
+      brief,
+      tagline,
+      palette,
+      reel_url: null,
+      reel_pending: true,
+      verdict_line: `15-second reel for ${name} — styled from ${avatar ? "your own image" : "the house palette"}, in your own words.`,
+      generated_at: now(),
+    },
+  };
 }
 
 // CLI: npm run reel -- 5421

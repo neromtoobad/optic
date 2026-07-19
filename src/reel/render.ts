@@ -112,8 +112,11 @@ export function briefToProps(
   brief: AgentBrief,
   tagline: string,
   palette: { accent: string; accent2: string; label: string; ink: string },
+  opts: { kind?: "agent" | "custom"; cta?: string | null } = {},
 ): ReelProps {
   return {
+    kind: opts.kind ?? "agent",
+    cta: opts.cta ?? null,
     agentId: brief.agent_id,
     name: brief.name,
     tagline,
