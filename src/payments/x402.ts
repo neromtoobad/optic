@@ -25,6 +25,10 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
   { path: "/v1/timing", price: 0.05, description: "Optic AI narrative timing: early vs late lifecycle for any token", mode: "timing" },
   { path: "/v1/stocks", price: 0.5, description: "Optic AI stocks desk: cross-venue read on a stock — OKX tokenized share (xStock) + equity research + prediction markets", mode: "stocks" },
   { path: "/v1/touchgrass", price: 0.1, description: "TouchGrass onchain wellness: wallet behavior patterns, 0-100 score, personalized touch-grass protocol + shareable card", mode: "touchgrass" },
+  // Agent Reel — a separate Art-creation agent listed against this same origin. Renders
+  // a 15s branded promo MP4 for any OKX.AI agent from its live listing. No `mode`: it is
+  // not a market read, it has its own handler in server.ts.
+  { path: "/v1/reel", price: 0.5, description: "Agent Reel: a 15-second branded promo video for any OKX.AI agent, built from its live listing and styled in its own colours. Provide: an agent id (e.g. 4380) or its okx.ai/agents/… link." },
   // Pulse — the 5-minute cross-venue read: same up/down window priced on OKX event
   // contracts AND Polymarket, with the divergence in points. Cheap + fast = order velocity.
   { path: "/v1/pulse", price: 0.05, description: "Optic AI pulse: the live 5-minute market pulse for BTC, ETH and SOL — the same up-or-down window priced on two venues (OKX event contracts and Polymarket), with both prices and the cross-venue divergence in points.\nProvide: nothing — POST with an empty body returns the current pulse for all covered coins." },
@@ -36,6 +40,8 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
 
 /** Header the read handler sets so settlement can attach the tx to the read row. */
 export const READ_ID_HEADER = "x-optic-read-id";
+/** Same, for a paid reel job — settlement records the tx on reel_jobs. */
+export const REEL_ID_HEADER = "x-optic-reel-id";
 /** Same, for a paid ticket — settlement records the tx on event_ticket. */
 export const TICKET_ID_HEADER = "x-optic-ticket-id";
 /** Same, for a paid pulse — settlement records the tx on pulse_log. */
@@ -350,6 +356,12 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
         db.prepare("UPDATE reads SET paid_tx = ? WHERE id = ?").run(settle.transaction, readId);
         console.log(`read ${readId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
       }
+      const reelId = c.res.headers.get(REEL_ID_HEADER);
+      if (reelId && settle.transaction) {
+        const { attachTx } = await import("../reel/jobs.js");
+        attachTx(reelId, settle.transaction);
+        console.log(`reel ${reelId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
+      }
       const ticketId = c.res.headers.get(TICKET_ID_HEADER);
       if (ticketId && settle.transaction) {
         const { attachTicketTx } = await import("../ticket/index.js");
@@ -364,6 +376,7 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
       }
       const headers = new Headers(c.res.headers);
       headers.delete(READ_ID_HEADER);
+      headers.delete(REEL_ID_HEADER);
       headers.delete(TICKET_ID_HEADER);
       headers.delete(PULSE_ID_HEADER);
       for (const [k, v] of Object.entries(settle.headers)) headers.set(k, v);

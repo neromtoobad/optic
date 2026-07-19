@@ -12,6 +12,7 @@ export const config = {
   readBudgetUsd: num("READ_BUDGET_USD", 0.3),
   databasePath: process.env.DATABASE_PATH ?? "./data/optic.db",
   cardsDir: process.env.CARDS_DIR ?? "./data/cards",
+  reelsDir: process.env.REELS_DIR ?? "./data/reels",
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
   // Tolerant of casing/whitespace — "True", "TRUE", " true " must not silently

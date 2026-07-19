@@ -3,7 +3,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
-import { createX402Middleware, READ_ID_HEADER, TICKET_ID_HEADER, PULSE_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
+import { createX402Middleware, READ_ID_HEADER, REEL_ID_HEADER, TICKET_ID_HEADER, PULSE_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
 import type { ForceMode } from "./pipeline/index.js";
 import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
@@ -54,9 +54,9 @@ for (const route of PAID_ROUTES) {
   const mode = route.mode; // undefined = full cross-venue read
   const needsQuery = NEEDS_QUERY.has(mode ?? "read");
 
-  // Ticket and pulse are x402-gated (in PAID_ROUTES so the middleware challenges them)
-  // but are not market reads — they have their own handlers below.
-  if (route.path === "/v1/ticket" || route.path === "/v1/pulse") continue;
+  // Reel, ticket and pulse are x402-gated (in PAID_ROUTES so the middleware challenges
+  // them) but are not market reads — they have their own handlers below.
+  if (route.path === "/v1/reel" || route.path === "/v1/ticket" || route.path === "/v1/pulse") continue;
 
   // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
   app.get(route.path, (c) => c.json({ error: "use POST" }, 405));
@@ -115,6 +115,72 @@ app.get("/v1/card/:id", async (c) => {
   const read = getRead(id);
   if (!read) return c.json({ error: "not found" }, 404);
   return c.json({ id: read.id, status: read.status, card_pending: true });
+});
+
+// ── AGENT REEL ─────────────────────────────────────────────────────────────
+// Paid, POST-only, x402-gated (via PAID_ROUTES). Plans the reel synchronously (cheap:
+// fetch brief + palette + tagline, a few seconds) so a bad agent id fails BEFORE
+// settlement — then settles, then renders the ~90s MP4 in the background. The buyer
+// gets reel_pending + a reel_url and polls GET /v1/reel/:id.mp4 (free).
+app.get("/v1/reel", (c) => c.json({ error: "use POST" }, 405));
+
+app.post("/v1/reel", paymentMiddleware, async (c) => {
+  let body: { query?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  if (!query) return c.json({ error: "query is required — an agent id like 4380, or an okx.ai/agents/… link" }, 400);
+  if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
+
+  const { BudgetGuard } = await import("./pipeline/budget.js");
+  const { planReel, produceReel } = await import("./reel/index.js");
+  const { createJob, markDone, markFailed } = await import("./reel/jobs.js");
+  const budget = new BudgetGuard();
+
+  const { verdict, jobId } = await planReel(query, budget);
+
+  // No agent / bad id → 4xx so the buyer is NOT charged (settlement only runs on <400).
+  if (!jobId || !verdict.brief || !verdict.tagline || !verdict.palette) {
+    return c.json(verdict, 404);
+  }
+
+  // Record the job and kick off the render — do NOT await it (render is ~90s; the buyer
+  // gets an immediate reel_pending). The serialised queue in render.ts keeps concurrent
+  // reels from fighting Chromium.
+  createJob(jobId, verdict.brief.agent_id, verdict.brief.name);
+  produceReel(jobId, verdict.brief, verdict.tagline, verdict.palette)
+    .then(() => markDone(jobId))
+    .catch((err) => {
+      console.error(`reel ${jobId} render failed:`, err);
+      markFailed(jobId, err instanceof Error ? err.message : String(err));
+    });
+
+  verdict.reel_url = `${config.publicBaseUrl || ""}/v1/reel/${jobId}.mp4`;
+  c.header(REEL_ID_HEADER, jobId); // settlement attaches the tx to reel_jobs, then strips it
+  return c.json(verdict);
+});
+
+// Free: serve the rendered MP4, or report status while it renders.
+app.get("/v1/reel/:id", async (c) => {
+  const id = c.req.param("id").replace(/\.mp4$/, "");
+  const { reelPath } = await import("./reel/render.js");
+  const { getJob } = await import("./reel/jobs.js");
+
+  const path = reelPath(id);
+  if (path) {
+    const { readFileSync } = await import("node:fs");
+    return c.body(new Uint8Array(readFileSync(path)), 200, {
+      "Content-Type": "video/mp4",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+  }
+  const job = getJob(id);
+  if (!job) return c.json({ error: "not found" }, 404);
+  if (job.status === "failed") return c.json({ id, status: "failed", error: job.error }, 500);
+  return c.json({ id, status: job.status, reel_pending: true });
 });
 
 // ── PULSE ──────────────────────────────────────────────────────────────────
@@ -181,7 +247,7 @@ app.post("/v1/ticket", paymentMiddleware, async (c) => {
 // card link died on the next deploy). Loud at boot so it can't regress quietly.
 const volumeMount = process.env.RAILWAY_VOLUME_MOUNT_PATH;
 if (volumeMount) {
-  for (const [name, p] of [["DATABASE_PATH", config.databasePath], ["CARDS_DIR", config.cardsDir]] as const) {
+  for (const [name, p] of [["DATABASE_PATH", config.databasePath], ["CARDS_DIR", config.cardsDir], ["REELS_DIR", config.reelsDir]] as const) {
     if (!p.startsWith(volumeMount)) {
       console.error(
         `!!! PERSISTENCE WARNING: volume mounted at ${volumeMount} but ${name}=${p} is NOT on it — ` +

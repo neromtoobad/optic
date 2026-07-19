@@ -6,3 +6,7 @@ data
 *.md
 scripts
 test
+tmp
+media-kit
+reel-studio/node_modules
+**/node_modules

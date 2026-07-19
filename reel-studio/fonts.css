@@ -1,0 +1,4 @@
+/* Brand fonts, inlined by the bundler so renders never wait on a network font. */
+@font-face { font-family: 'Space Grotesk'; font-weight: 500; src: url('./sg-500.woff') format('woff'); font-display: block; }
+@font-face { font-family: 'Space Grotesk'; font-weight: 700; src: url('./sg-700.woff') format('woff'); font-display: block; }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; src: url('./ipm-400.woff') format('woff'); font-display: block; }

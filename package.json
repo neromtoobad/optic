@@ -26,7 +26,11 @@
     "unlocks": "tsx src/lenses/unlocks.ts",
     "card": "tsx src/card/render.ts",
     "wallet": "tsx src/lenses/wallet.ts",
-    "touchgrass": "tsx src/touchgrass/index.ts"
+    "touchgrass": "tsx src/touchgrass/index.ts",
+    "reel-brief": "tsx src/reel/agent.ts",
+    "reel": "tsx src/reel/index.ts",
+    "ticket": "tsx src/ticket/index.ts",
+    "pulse": "tsx src/pulse.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
@@ -34,16 +38,29 @@
     "@okxweb3/x402-core": "^0.1.0",
     "@okxweb3/x402-evm": "^0.2.1",
     "@okxweb3/x402-express": "^0.1.1",
+    "@polymarket/clob-client": "^5.8.1",
+    "@polymarket/clob-client-v2": "^1.1.0",
+    "@polymarket/sdk": "^8.0.1",
+    "@remotion/bundler": "^4.0.490",
+    "@remotion/fonts": "^4.0.490",
+    "@remotion/renderer": "^4.0.490",
     "@resvg/resvg-js": "^2.6.2",
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
     "hono": "^4.6.16",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "remotion": "^4.0.490",
     "satori": "^0.26.0",
-    "satori-html": "^0.3.2"
+    "satori-html": "^0.3.2",
+    "sharp": "^0.35.3",
+    "viem": "^2.55.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^20.17.12",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
