@@ -168,7 +168,24 @@ function parseNumbers(q: string): number[] {
   return out;
 }
 
-interface RawTicker { instId: string; bidPx: string; askPx: string; vol24h: string }
+export interface RawTicker { instId: string; bidPx: string; askPx: string; vol24h: string }
+
+/** All live EVENTS tickers (fresh — no cache; pulse needs current prices). */
+export async function listEventTickers(): Promise<RawTicker[] | null> {
+  return get<RawTicker[]>("/api/v5/market/tickers?instType=EVENTS", { cache: false });
+}
+
+export interface SeriesInstrument { instId: string; expTime: string; state: string }
+/**
+ * Instruments of one series with AUTHORITATIVE expiry (`expTime`, ms). The instId's
+ * embedded times are NOT reliably UTC (5MIN series encode UTC+8) — verified live:
+ * BTC-UPDOWN-5MIN-…-2350-2355 carries expTime 15:55:00Z. Always expire off expTime.
+ */
+export async function listSeriesInstruments(seriesId: string): Promise<SeriesInstrument[] | null> {
+  return get<SeriesInstrument[]>(`/api/v5/public/instruments?instType=EVENTS&seriesId=${encodeURIComponent(seriesId)}`, {
+    cache: false,
+  });
+}
 
 /**
  * Find the most relevant live contract for a plain-language query.

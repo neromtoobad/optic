@@ -25,6 +25,9 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
   { path: "/v1/timing", price: 0.05, description: "Optic AI narrative timing: early vs late lifecycle for any token", mode: "timing" },
   { path: "/v1/stocks", price: 0.5, description: "Optic AI stocks desk: cross-venue read on a stock — OKX tokenized share (xStock) + equity research + prediction markets", mode: "stocks" },
   { path: "/v1/touchgrass", price: 0.1, description: "TouchGrass onchain wellness: wallet behavior patterns, 0-100 score, personalized touch-grass protocol + shareable card", mode: "touchgrass" },
+  // Pulse — the 5-minute cross-venue read: same up/down window priced on OKX event
+  // contracts AND Polymarket, with the divergence in points. Cheap + fast = order velocity.
+  { path: "/v1/pulse", price: 0.05, description: "Optic AI pulse: the live 5-minute market pulse for BTC, ETH and SOL — the same up-or-down window priced on two venues (OKX event contracts and Polymarket), with both prices and the cross-venue divergence in points.\nProvide: nothing — POST with an empty body returns the current pulse for all covered coins." },
   // Ticket Desk — order CONSTRUCTION, never execution: resolves the caller's chosen
   // event contract, checks the live book, returns the exact order payload. The caller
   // submits it with their own OKX API key; no trade key ever touches this server.
@@ -35,6 +38,8 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
 export const READ_ID_HEADER = "x-optic-read-id";
 /** Same, for a paid ticket — settlement records the tx on event_ticket. */
 export const TICKET_ID_HEADER = "x-optic-ticket-id";
+/** Same, for a paid pulse — settlement records the tx on pulse_log. */
+export const PULSE_ID_HEADER = "x-optic-pulse-id";
 
 /** Hono implementation of the SDK's HTTPAdapter (mirrors ExpressAdapter). */
 class HonoAdapter implements HTTPAdapter {
@@ -351,9 +356,16 @@ export function createX402Middleware(): (c: Context, next: Next) => Promise<Resp
         attachTicketTx(ticketId, settle.transaction);
         console.log(`ticket ${ticketId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
       }
+      const pulseId = c.res.headers.get(PULSE_ID_HEADER);
+      if (pulseId && settle.transaction) {
+        const { attachPulseTx } = await import("../pulse.js");
+        attachPulseTx(pulseId, settle.transaction);
+        console.log(`pulse ${pulseId} settled — tx ${settle.transaction} (${settle.status ?? "success"})`);
+      }
       const headers = new Headers(c.res.headers);
       headers.delete(READ_ID_HEADER);
       headers.delete(TICKET_ID_HEADER);
+      headers.delete(PULSE_ID_HEADER);
       for (const [k, v] of Object.entries(settle.headers)) headers.set(k, v);
       c.res = new Response(c.res.body, { status: c.res.status, headers });
     } catch (err) {

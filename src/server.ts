@@ -3,7 +3,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { config } from "./config.js";
 import { runRead } from "./pipeline/index.js";
-import { createX402Middleware, READ_ID_HEADER, TICKET_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
+import { createX402Middleware, READ_ID_HEADER, TICKET_ID_HEADER, PULSE_ID_HEADER, PAID_ROUTES } from "./payments/x402.js";
 import type { ForceMode } from "./pipeline/index.js";
 import { getRead } from "./db.js";
 import { BudgetExceededError } from "./pipeline/budget.js";
@@ -54,9 +54,9 @@ for (const route of PAID_ROUTES) {
   const mode = route.mode; // undefined = full cross-venue read
   const needsQuery = NEEDS_QUERY.has(mode ?? "read");
 
-  // Ticket Desk is x402-gated (in PAID_ROUTES so the middleware challenges it) but has
-  // its own handler below — it is not a market read, so skip the generic read-loop.
-  if (route.path === "/v1/ticket") continue;
+  // Ticket and pulse are x402-gated (in PAID_ROUTES so the middleware challenges them)
+  // but are not market reads — they have their own handlers below.
+  if (route.path === "/v1/ticket" || route.path === "/v1/pulse") continue;
 
   // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
   app.get(route.path, (c) => c.json({ error: "use POST" }, 405));
@@ -115,6 +115,24 @@ app.get("/v1/card/:id", async (c) => {
   const read = getRead(id);
   if (!read) return c.json({ error: "not found" }, 404);
   return c.json({ id: read.id, status: read.status, card_pending: true });
+});
+
+// ── PULSE ──────────────────────────────────────────────────────────────────
+// Paid, POST-only, x402-gated. The 5-minute cross-venue read: same up/down window
+// priced on OKX event contracts AND Polymarket, divergence in points. No body needed.
+app.get("/v1/pulse", (c) => c.json({ error: "use POST" }, 405));
+
+app.post("/v1/pulse", paymentMiddleware, async (c) => {
+  const { runPulse } = await import("./pulse.js");
+  try {
+    const verdict = await runPulse();
+    if (!verdict.pulse_id) return c.json(verdict, 404); // no open windows → buyer keeps their money
+    c.header(PULSE_ID_HEADER, verdict.pulse_id);
+    return c.json(verdict);
+  } catch (err) {
+    console.error("/v1/pulse failed:", err);
+    return c.json({ error: "pulse failed" }, 500);
+  }
 });
 
 // ── TICKET DESK ────────────────────────────────────────────────────────────
