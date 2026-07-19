@@ -177,3 +177,20 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
   - Custom-brief reel proven pre-registration: "Nerom Studio" brief (name + words + image + 3 highlights
     + cta) → palette read from the supplied image, honest tagline from their own words, kind-aware beats
     ("Highlights", "Made to be seen.", branded outro) — rendered MP4 on the first pass.
+
+- **Jul 19, 2026 — AGENT REEL: full 5/5 paid-proof campaign on its own host, all settled**
+  - Every service on agent-reel-production.up.railway.app bought end-to-end with real x402 payments
+    (deferred scheme, facilitator settled each with status=success; payer 0xda30617e…7e9d; 0.9 USDT total):
+    1. **Promo Reel 0.5** — a CUSTOM brief (the studio's own brand): palette from its avatar, honest
+       tagline from its own words, rendered 898KB MP4 served from the volume:
+       https://agent-reel-production.up.railway.app/v1/reel/7c0b6e2d-77e0-46a2-8ed7-aeefa520abdd.mp4
+    2. **Hero Image Studio 0.1** — "Agent Reel / the studio for the agent economy" projector-beam header:
+       https://agent-reel-production.up.railway.app/v1/assets/78aab62f-1ef7-4bc4-8b84-710e8b01d78f/hero.png
+    3. **Brand Kit Builder 0.1** — CoinAnk OpenAPI (#2013): palette #6576ef read from their own avatar,
+       type pairing + mark concept + motion beat.
+    4. **Image Restyler 0.1** — the paid hero reframed 1080x1080 (attention crop):
+       https://agent-reel-production.up.railway.app/v1/assets/43c6648d-c0d2-45df-92e0-9a3f0623cc00/restyled.png
+    5. **Mint Package Forge 0.1** — "Agent Reel — First Light": ERC-721 metadata + CIDv1
+       (image bafkreiecqldc…, metadata bafkreihlnhqw…), hosted package, no pin/no mint.
+  - Proofs 2→4→5 chain each other's outputs (hero → square → mint package): the studio's services
+    compose, and the launch kit (reel + header + mintable artwork) was produced BY the product itself.
