@@ -133,24 +133,21 @@ app.post("/v1/ticket", paymentMiddleware, async (c) => {
   }
   const query = typeof body.query === "string" ? body.query.trim() : "";
   const side = typeof body.side === "string" ? body.side.trim().toLowerCase() : "";
-  const xp = Number(body.xp);
-  const signer = typeof body.signer === "string" ? body.signer.trim() : "";
+  const usdt = Number(body.usdt);
   const limit = body.limit === undefined ? undefined : Number(body.limit);
 
   if (!query || query.length > 300)
-    return c.json({ error: "query is required — an OKX Outcomes event or market question (≤300 chars)" }, 400);
+    return c.json({ error: "query is required — an event in plain words, e.g. 'BTC above 60000 today' (≤300 chars)" }, 400);
   if (side !== "yes" && side !== "no")
     return c.json({ error: "side must be 'yes' or 'no' — the ticket desk constructs, it never chooses" }, 400);
-  if (!Number.isFinite(xp) || xp < 1 || xp > 100_000)
-    return c.json({ error: "xp must be a number between 1 and 100000 (OKX X-Layer Points, the venue base asset)" }, 400);
-  if (!/^0x[0-9a-fA-F]{40}$/.test(signer))
-    return c.json({ error: "signer is required — the X Layer address whose key will sign the order (0x…)" }, 400);
+  if (!Number.isFinite(usdt) || usdt < 1 || usdt > 10_000)
+    return c.json({ error: "usdt must be a number between 1 and 10000 (capital to commit)" }, 400);
   if (limit !== undefined && !(limit > 0 && limit < 1))
     return c.json({ error: "limit, when given, must be between 0 and 1" }, 400);
 
   const { planTicket } = await import("./ticket/index.js");
   try {
-    const verdict = await planTicket({ query, side, xp, limit, signer });
+    const verdict = await planTicket({ query, side, usdt, limit });
     if (!verdict.ticket) return c.json(verdict, 404); // not constructible → buyer keeps their money
     if (verdict.ticket_id) c.header(TICKET_ID_HEADER, verdict.ticket_id);
     return c.json(verdict);

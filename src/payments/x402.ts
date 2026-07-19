@@ -26,14 +26,14 @@ export const PAID_ROUTES: Array<{ path: string; price: number; description: stri
   { path: "/v1/stocks", price: 0.5, description: "Optic AI stocks desk: cross-venue read on a stock — OKX tokenized share (xStock) + equity research + prediction markets", mode: "stocks" },
   { path: "/v1/touchgrass", price: 0.1, description: "TouchGrass onchain wellness: wallet behavior patterns, 0-100 score, personalized touch-grass protocol + shareable card", mode: "touchgrass" },
   // Ticket Desk — order CONSTRUCTION, never execution: resolves the caller's chosen
-  // OKX Outcomes market, checks the live book, returns the signable payload. The
-  // caller's wallet signs and submits; no key ever touches this server.
-  { path: "/v1/ticket", price: 0.1, description: "Optic AI ticket desk: turns a decided position into a ready-to-sign OKX Outcomes order on X Layer — resolves the event market, checks the live order book, sizes the order, returns the exact signable payload; the caller's own wallet signs and submits.\nProvide: 1. the market (an OKX Outcomes event or question); 2. side (yes or no); 3. size in xp; optional limit price and signer address." },
+  // event contract, checks the live book, returns the exact order payload. The caller
+  // submits it with their own OKX API key; no trade key ever touches this server.
+  { path: "/v1/ticket", price: 0.1, description: "Optic AI ticket desk: turns a decided position into a ready-to-submit OKX event-contract order (USDT-settled) — resolves the live contract, reads the order book, sizes the order and returns the exact order payload for the caller's own OKX API key.\nProvide: 1. the event in plain words (e.g. BTC above 60000 today); 2. side (yes or no); 3. USDT size; optional limit price." },
 ];
 
 /** Header the read handler sets so settlement can attach the tx to the read row. */
 export const READ_ID_HEADER = "x-optic-read-id";
-/** Same, for a paid ticket — settlement records the tx on outcome_ticket. */
+/** Same, for a paid ticket — settlement records the tx on event_ticket. */
 export const TICKET_ID_HEADER = "x-optic-ticket-id";
 
 /** Hono implementation of the SDK's HTTPAdapter (mirrors ExpressAdapter). */
