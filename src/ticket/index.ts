@@ -17,18 +17,20 @@ import {
   type EventOrderDraft,
   type EventsBook,
 } from "./events.js";
+import { buildPluginRail, isUpdownQuery, resolveUpdown, updownCoin, type PluginRail } from "./updown.js";
 
 export interface Ticket {
-  venue: "okx-events";
-  settlement: "USDT";
+  venue: "okx-events" | "polymarket-updown";
+  settlement: "USDT" | "USDC";
   economics: {
-    outcome: "Yes" | "No";
-    inst_id: string;
-    limit_price: number; // price of the submitted order (YES-book terms)
+    outcome: string;
+    inst_id: string; // OKX instId, or the Polymarket condition id on the plugin rail
+    limit_price: number; // price of the submitted order (YES/Up-book terms)
     contracts: number;
     usdt_at_risk: number;
   };
-  draft: EventOrderDraft; // the caller submits this with their own OKX API key
+  draft: EventOrderDraft | null; // OKX rail: the caller submits with their own OKX API key
+  plugin_rail: PluginRail | null; // buyer-rails execution via OKX's polymarket-plugin
 }
 
 export interface TicketVerdict {
@@ -74,6 +76,50 @@ export interface TicketParams {
   limit?: number; // optional explicit YES-side limit price in (0,1)
 }
 
+/** Ticket on the buyer-rails plugin venue (Polymarket 5-min Up/Down via OKX's plugin). */
+function updownTicket(p: TicketParams, market: import("./updown.js").UpdownMarket, ): TicketVerdict {
+  const rail = buildPluginRail(market, p.side, p.usdt);
+  const price = (p.side === "yes" ? market.up_price : market.down_price) ?? 0.5;
+  const contracts = Number((p.usdt / Math.max(price, 0.01)).toFixed(2));
+  const ticket: Ticket = {
+    venue: "polymarket-updown",
+    settlement: "USDC",
+    economics: {
+      outcome: rail.outcome,
+      inst_id: market.condition_id,
+      limit_price: price,
+      contracts,
+      usdt_at_risk: p.usdt,
+    },
+    draft: null,
+    plugin_rail: rail,
+  };
+  const ticketId = randomUUID();
+  db.prepare(
+    "INSERT INTO event_ticket (id, inst_id, question, outcome, limit_price, usdt, created_at) VALUES (?,?,?,?,?,?,?)",
+  ).run(ticketId, market.condition_id, market.question, rail.outcome, price, p.usdt, now());
+  return {
+    ticket_id: ticketId,
+    query: p.query,
+    resolved: {
+      type: "event_contract",
+      inst_id: market.condition_id,
+      series_id: `${market.coin}-UPDOWN-5M`,
+      question: market.question,
+      expiry_ms: Date.parse(market.window_end_utc) || null,
+      state: market.accepting_orders ? "live" : "closed",
+      vol_24h: market.liquidity,
+    },
+    book: null,
+    ticket,
+    verdict_line:
+      `Ticket constructed: ${rail.outcome} on "${market.question}" — ` +
+      `${p.usdt} USDC via your own OKX polymarket-plugin (window closes ${market.window_end_utc}). ` +
+      `Run the included command with your agentic wallet; the plugin's own confirmation gates apply.`,
+    generated_at: now(),
+  };
+}
+
 function fail(query: string, line: string): TicketVerdict {
   return {
     ticket_id: null,
@@ -87,11 +133,21 @@ function fail(query: string, line: string): TicketVerdict {
 }
 
 export async function planTicket(p: TicketParams): Promise<TicketVerdict> {
+  // Short-horizon up/down intent rides the buyer-rails plugin venue (verified live:
+  // OKX's polymarket-plugin, running on the caller's own agentic wallet).
+  if (isUpdownQuery(p.query)) {
+    const coin = updownCoin(p.query);
+    if (coin) {
+      const market = await resolveUpdown(coin);
+      if (market) return updownTicket(p, market);
+    }
+  }
+
   const contract = await resolveEventContract(p.query);
   if (!contract)
     return fail(
       p.query,
-      `No live OKX event contract matches "${p.query}" — name the asset and condition, e.g. "BTC above 60000 today" or "gold hits 4500 this month".`,
+      `No live market matches "${p.query}" — name the asset and condition, e.g. "BTC above 60000 today", "gold hits 4500 this month", or "BTC next 5 min".`,
     );
   if (contract.state !== "live")
     return fail(p.query, `"${contract.question}" is not currently tradable (state: ${contract.state}).`);
@@ -122,6 +178,7 @@ export async function planTicket(p: TicketParams): Promise<TicketVerdict> {
       usdt_at_risk: atRisk,
     },
     draft,
+    plugin_rail: null,
   };
 
   const ticketId = randomUUID();
