@@ -56,7 +56,7 @@ for (const route of PAID_ROUTES) {
 
   // Reel, ticket and pulse are x402-gated (in PAID_ROUTES so the middleware challenges
   // them) but are not market reads — they have their own handlers below.
-  if (route.path === "/v1/reel" || route.path === "/v1/ticket" || route.path === "/v1/pulse") continue;
+  if (["/v1/reel", "/v1/ticket", "/v1/pulse", "/v1/asset", "/v1/brandkit", "/v1/restyle", "/v1/forge"].includes(route.path)) continue;
 
   // Paid endpoints are POST-only; GET on a paid route → 405 (Onchain Data Explorer pattern).
   app.get(route.path, (c) => c.json({ error: "use POST" }, 405));
@@ -183,6 +183,134 @@ app.get("/v1/reel/:id", async (c) => {
   return c.json({ id, status: job.status, reel_pending: true });
 });
 
+// ── STUDIO (Agent Reel's sibling services) ─────────────────────────────────
+// Paid, POST-only, x402-gated. All input failures return 4xx BEFORE settlement —
+// the buyer is never charged for a request the studio can't honour.
+type ForgeAttr = { trait_type: string; value: string | number };
+for (const p of ["/v1/asset", "/v1/brandkit", "/v1/restyle", "/v1/forge"]) {
+  app.get(p, (c) => c.json({ error: "use POST" }, 405));
+}
+
+app.post("/v1/asset", paymentMiddleware, async (c) => {
+  let body: { query?: unknown; title?: unknown; subtitle?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  if (!query || query.length > 500) return c.json({ error: "query is required — describe the scene (≤500 chars)" }, 400);
+  const { BudgetGuard } = await import("./pipeline/budget.js");
+  const { makeAsset } = await import("./studio/asset.js");
+  try {
+    const result = await makeAsset(
+      {
+        query,
+        title: typeof body.title === "string" ? body.title.slice(0, 120) : undefined,
+        subtitle: typeof body.subtitle === "string" ? body.subtitle.slice(0, 200) : undefined,
+      },
+      new BudgetGuard()
+    );
+    return c.json(result);
+  } catch (err) {
+    console.error("/v1/asset failed:", err);
+    return c.json({ error: "asset generation failed" }, 500);
+  }
+});
+
+app.post("/v1/brandkit", paymentMiddleware, async (c) => {
+  let body: { query?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  if (!query || query.length > 800) return c.json({ error: "query is required — an agent id, listing link, or brand description" }, 400);
+  const { BudgetGuard } = await import("./pipeline/budget.js");
+  const { makeBrandKit } = await import("./studio/brandkit.js");
+  try {
+    const kit = await makeBrandKit(query, new BudgetGuard());
+    if (!kit) return c.json({ error: `no listed agent found for "${query.slice(0, 40)}" — it may be under review; try again once its page is live, or describe the brand in words` }, 404);
+    return c.json(kit);
+  } catch (err) {
+    console.error("/v1/brandkit failed:", err);
+    return c.json({ error: "brandkit failed" }, 500);
+  }
+});
+
+app.post("/v1/restyle", paymentMiddleware, async (c) => {
+  let body: Record<string, unknown>;
+  try {
+    body = (await c.req.json()) as Record<string, unknown>;
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  if (typeof body.image_url !== "string") return c.json({ error: "image_url is required" }, 400);
+  const { BudgetGuard } = await import("./pipeline/budget.js");
+  const { restyle, RestyleInputError, ImageFetchError } = await import("./studio/restyle.js");
+  try {
+    const result = await restyle(
+      {
+        image_url: body.image_url,
+        width: typeof body.width === "number" ? body.width : undefined,
+        height: typeof body.height === "number" ? body.height : undefined,
+        scale: typeof body.scale === "number" ? body.scale : undefined,
+        background: typeof body.background === "string" ? body.background : undefined,
+      },
+      new BudgetGuard()
+    );
+    return c.json(result);
+  } catch (err) {
+    if (err instanceof RestyleInputError || err instanceof ImageFetchError) return c.json({ error: err.message }, 400);
+    console.error("/v1/restyle failed:", err);
+    return c.json({ error: "restyle failed" }, 500);
+  }
+});
+
+app.post("/v1/forge", paymentMiddleware, async (c) => {
+  let body: Record<string, unknown>;
+  try {
+    body = (await c.req.json()) as Record<string, unknown>;
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  if (typeof body.image_url !== "string" || typeof body.name !== "string" || typeof body.description !== "string")
+    return c.json({ error: "image_url, name and description are required" }, 400);
+  const { BudgetGuard } = await import("./pipeline/budget.js");
+  const { forge, ForgeInputError } = await import("./studio/forge.js");
+  const { ImageFetchError } = await import("./studio/shared.js");
+  try {
+    const result = await forge(
+      {
+        image_url: body.image_url,
+        name: body.name,
+        description: body.description,
+        attributes: Array.isArray(body.attributes) ? (body.attributes as ForgeAttr[]) : undefined,
+        external_url: typeof body.external_url === "string" ? body.external_url : undefined,
+      },
+      new BudgetGuard()
+    );
+    return c.json(result);
+  } catch (err) {
+    if (err instanceof ForgeInputError || err instanceof ImageFetchError) return c.json({ error: err.message }, 400);
+    console.error("/v1/forge failed:", err);
+    return c.json({ error: "forge failed" }, 500);
+  }
+});
+
+// Free: serve studio outputs (hero.png / restyled.png / image.png / metadata.json).
+app.get("/v1/assets/:id/:file", async (c) => {
+  const { assetPath } = await import("./studio/shared.js");
+  const p = assetPath(c.req.param("id"), c.req.param("file"));
+  if (!p) return c.json({ error: "not found" }, 404);
+  const { readFileSync } = await import("node:fs");
+  return c.body(new Uint8Array(readFileSync(p)), 200, {
+    "Content-Type": p.endsWith(".json") ? "application/json" : "image/png",
+    "Cache-Control": "public, max-age=31536000, immutable",
+  });
+});
+
 // ── PULSE ──────────────────────────────────────────────────────────────────
 // Paid, POST-only, x402-gated. The 5-minute cross-venue read: same up/down window
 // priced on OKX event contracts AND Polymarket, divergence in points. No body needed.
@@ -247,7 +375,7 @@ app.post("/v1/ticket", paymentMiddleware, async (c) => {
 // card link died on the next deploy). Loud at boot so it can't regress quietly.
 const volumeMount = process.env.RAILWAY_VOLUME_MOUNT_PATH;
 if (volumeMount) {
-  for (const [name, p] of [["DATABASE_PATH", config.databasePath], ["CARDS_DIR", config.cardsDir], ["REELS_DIR", config.reelsDir]] as const) {
+  for (const [name, p] of [["DATABASE_PATH", config.databasePath], ["CARDS_DIR", config.cardsDir], ["REELS_DIR", config.reelsDir], ["ASSETS_DIR", config.assetsDir]] as const) {
     if (!p.startsWith(volumeMount)) {
       console.error(
         `!!! PERSISTENCE WARNING: volume mounted at ${volumeMount} but ${name}=${p} is NOT on it — ` +

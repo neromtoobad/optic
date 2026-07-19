@@ -13,6 +13,7 @@ export const config = {
   databasePath: process.env.DATABASE_PATH ?? "./data/optic.db",
   cardsDir: process.env.CARDS_DIR ?? "./data/cards",
   reelsDir: process.env.REELS_DIR ?? "./data/reels",
+  assetsDir: process.env.ASSETS_DIR ?? "./data/assets",
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
   // Tolerant of casing/whitespace — "True", "TRUE", " true " must not silently

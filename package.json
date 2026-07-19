@@ -30,7 +30,11 @@
     "reel-brief": "tsx src/reel/agent.ts",
     "reel": "tsx src/reel/index.ts",
     "ticket": "tsx src/ticket/index.ts",
-    "pulse": "tsx src/pulse.ts"
+    "pulse": "tsx src/pulse.ts",
+    "asset": "tsx src/studio/asset.ts",
+    "brandkit": "tsx src/studio/brandkit.ts",
+    "restyle": "tsx src/studio/restyle.ts",
+    "forge": "tsx src/studio/forge.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
@@ -48,6 +52,7 @@
     "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.7",
     "hono": "^4.6.16",
+    "multiformats": "^13.4.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "remotion": "^4.0.490",
