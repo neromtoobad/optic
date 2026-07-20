@@ -194,3 +194,15 @@ Grows with every milestone and sale. All on X Layer (chainIndex 196).
        (image bafkreiecqldc…, metadata bafkreihlnhqw…), hosted package, no pin/no mint.
   - Proofs 2→4→5 chain each other's outputs (hero → square → mint package): the studio's services
     compose, and the launch kit (reel + header + mintable artwork) was produced BY the product itself.
+
+- **Jul 20, 2026 — INDEPENDENT-BUYER retest: all 14 services, second wallet, both agents**
+  - Every listed service on both agents re-bought from a distinct buyer wallet — Account 2
+    `0x4802046a3572913c85506fcefa19172a1791980e` (funded 4 USD₮0, spent exactly 3.2, 0.8 left) →
+    payout `0xda30617e…7e9d`. Proves the services settle for a real third party, not just the owner.
+  - **Agent Reel #6731 (5/5)**: reel 0.5, asset 0.1, brandkit 0.1, restyle 0.1, forge 0.1 — all HTTP 200, settle=success.
+  - **Optic AI #4380 (9/9)**: rug 0.05, smart-money 0.05, timing 0.05, pulse 0.05, read 0.5, stocks 0.5,
+    edge 0.5, daily 0.5, ticket 0.1 — all HTTP 200, settle=success. Ticket resolved a LIVE OKX event
+    contract (BTC-ABOVE-DAILY-260721-1600-62000, "Bitcoin above 62,000 at Jul 21 16:00 UTC", state:live)
+    and returned book + signable ticket.
+  - Safety confirmed live: a malformed ticket body (wrong keys) returned HTTP 400 with settle=none — the
+    buyer was NOT charged for a request that couldn't build. 14/14 services green after correct retry.
