@@ -259,8 +259,11 @@ payment-required: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50...</code></pre>
     <h3>Request body</h3>
     <p>Query-scoped services (<code>/v1/read</code>, <code>/v1/rug</code>, <code>/v1/timing</code>, <code>/v1/stocks</code>) take a subject:</p>
     <pre><code>{ <span class="k">"query"</span>: <span class="s">"NVDA"</span>, <span class="k">"chain"</span>: <span class="s">"solana"</span> }   <span class="c">// chain optional</span></code></pre>
-    <p><code>query</code> accepts a token address, a ticker, or a narrative in plain words. Discovery services (<code>/v1/daily</code>, <code>/v1/edge</code>, <code>/v1/smart-money</code>, <code>/v1/pulse</code>) ignore the body — they scan the whole market:</p>
+    <p><code>query</code> accepts a token address, a ticker, or a narrative in plain words — addresses resolve across Solana, Ethereum, BSC, Base and X Layer. <code>token</code>, <code>address</code> and <code>ticker</code> are accepted as aliases for <code>query</code>. Discovery services (<code>/v1/daily</code>, <code>/v1/edge</code>, <code>/v1/smart-money</code>, <code>/v1/pulse</code>) ignore the body — they scan the whole market:</p>
     <pre><code>{}</code></pre>
+    <div class="note">
+      <b>No answer, no charge.</b> If <code>/v1/rug</code> or <code>/v1/timing</code> can't resolve the token or produce its core data, the response is <code>404</code> with the honest verdict — returned <em>before</em> settlement, so the caller is never charged for a non-answer.
+    </div>
 
     <h3><code>/v1/ticket</code> — Order Ticket</h3>
     <p>Order <strong>construction</strong>, never execution. Optic resolves the live market, reads the book, sizes the order and returns the exact payload; the caller signs and submits with its <strong>own</strong> OKX key or wallet plugin. No trade key ever touches this server.</p>

@@ -5,6 +5,10 @@ import { BudgetGuard } from "../pipeline/budget.js";
 import { isCliEntry } from "../fixtures.js";
 
 const DEFAULT_CHAIN = "501"; // solana — v1 primary chain
+// Token search spans the majors — an ERC-20 address or an ethereum-native ticker
+// must resolve, not fall through to "narrative" (a real buyer hit this with PEPE:
+// 0x6982…1933 read as not-a-token because search was solana-only).
+const SEARCH_CHAINS = "501,1,56,8453,196"; // solana, ethereum, bsc, base, xlayer
 
 const CLASSIFY_SCHEMA = {
   type: "object",
@@ -36,17 +40,38 @@ export type ResolvedOrScan =
   | { type: "edge"; name: string }
   | { type: "smartmoney"; name: string };
 
+type Classified = { kind: "token_address" | "ticker" | "narrative" | "scan" | "daily" | "edge" | "smartmoney"; cleaned: string };
+
+/**
+ * Deterministic fallback classifier. A transient LLM failure must degrade a read,
+ * never 500 it — a buyer paid three times into "read failed" when the classify
+ * call was down; shape-based rules keep address/ticker reads alive without it.
+ */
+function heuristicClassify(query: string): Classified {
+  const q = query.trim();
+  if (/^0x[0-9a-fA-F]{40}$/.test(q) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(q))
+    return { kind: "token_address", cleaned: q };
+  if (/^\$?[A-Za-z0-9_.-]{2,12}$/.test(q)) return { kind: "ticker", cleaned: q.replace(/^\$/, "").toUpperCase() };
+  return { kind: "narrative", cleaned: q.toLowerCase() };
+}
+
 export async function resolve(query: string, budget: BudgetGuard): Promise<ResolvedOrScan> {
-  const cls = await structuredCall<{ kind: "token_address" | "ticker" | "narrative" | "scan" | "daily" | "edge" | "smartmoney"; cleaned: string }>({
-    label: "resolve_classify",
-    system:
-      "You classify a crypto market query. Classify precisely; do not guess a ticker out of a phrase that reads as a story or event.",
-    user: query,
-    schema: CLASSIFY_SCHEMA as unknown as Record<string, unknown>,
-    budget,
-    maxTokens: 200,
-    effort: "low",
-  });
+  let cls: Classified;
+  try {
+    cls = await structuredCall<Classified>({
+      label: "resolve_classify",
+      system:
+        "You classify a crypto market query. Classify precisely; do not guess a ticker out of a phrase that reads as a story or event.",
+      user: query,
+      schema: CLASSIFY_SCHEMA as unknown as Record<string, unknown>,
+      budget,
+      maxTokens: 200,
+      effort: "low",
+    });
+  } catch (err) {
+    console.error(`resolve classify failed, using heuristic: ${(err as Error).message}`);
+    cls = heuristicClassify(query);
+  }
 
   if (cls.kind === "scan") {
     return { type: "scan", name: "market scan" };
@@ -64,8 +89,8 @@ export async function resolve(query: string, budget: BudgetGuard): Promise<Resol
     return { type: "narrative", name: cls.cleaned };
   }
 
-  // Canonicalize address/ticker via OKX token search (Trenches-aware).
-  const found = firstToken(await tokenSearch(cls.cleaned, DEFAULT_CHAIN, budget));
+  // Canonicalize address/ticker via OKX token search (Trenches-aware), across the majors.
+  const found = firstToken(await tokenSearch(cls.cleaned, SEARCH_CHAINS, budget));
   if (!found) {
     // Honest fallback: unresolvable ticker reads as a narrative, not invented token data.
     return { type: "narrative", name: cls.cleaned.toLowerCase() };

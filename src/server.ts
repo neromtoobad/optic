@@ -65,14 +65,17 @@ for (const route of PAID_ROUTES) {
     let query = "";
     let extras: { city?: string; tz?: string } | undefined;
     if (needsQuery) {
-      let body: { query?: unknown; city?: unknown; tz?: unknown };
+      let body: { query?: unknown; token?: unknown; address?: unknown; ticker?: unknown; city?: unknown; tz?: unknown };
       try {
         body = await c.req.json();
       } catch {
         return c.json({ error: "invalid JSON body" }, 400);
       }
-      query = typeof body.query === "string" ? body.query.trim() : "";
-      if (!query) return c.json({ error: "query is required (a token address, ticker, or subject)" }, 400);
+      // `query` is canonical; token/address/ticker are accepted aliases (buyers send
+      // {token, chain} shapes in the wild — a 400 on those is friction, not safety).
+      const raw = [body.query, body.token, body.address, body.ticker].find((v) => typeof v === "string" && v.trim());
+      query = typeof raw === "string" ? raw.trim() : "";
+      if (!query) return c.json({ error: "query is required (a token address, ticker, or subject) — also accepted as 'token', 'address' or 'ticker'" }, 400);
       if (query.length > 200) return c.json({ error: "query must be ≤200 chars" }, 400);
       // TouchGrass personalization: optional city (weather) + IANA timezone.
       if (mode === "touchgrass") {
@@ -87,7 +90,15 @@ for (const route of PAID_ROUTES) {
 
     try {
       const { readId, verdict, costUsd } = await runRead(query, mode ? { forceMode: mode, extras } : {});
-      console.log(`${route.path} ${readId} complete — cost $${costUsd.toFixed(4)}`);
+      console.log(`${route.path} ${readId} complete — cost ${costUsd.toFixed(4)}`);
+      // A non-answer must not settle: rug/timing reads whose core payload is null
+      // (unresolvable token, no onchain data) return 404 BEFORE the payment
+      // middleware settles — the buyer keeps their money. (A buyer paid 0.05 for
+      // risk:null on a valid ERC-20; that must never happen again.)
+      const noAnswer =
+        (mode === "rug" && (verdict as { risk?: unknown }).risk == null) ||
+        (mode === "timing" && (verdict as { timing?: unknown }).timing == null);
+      if (noAnswer) return c.json(verdict, 404);
       c.header(READ_ID_HEADER, readId); // settlement middleware attaches tx hash, then strips it
       return c.json(verdict);
     } catch (err) {
