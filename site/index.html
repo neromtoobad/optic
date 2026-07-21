@@ -6,7 +6,7 @@
 <title>Optic AI — the onchain alpha desk</title>
 <meta name="description" content="One agent that reads memecoins, prediction markets, tokenized stocks and social attention as one economy — and shows you where they stop agreeing. Live on OKX.AI, agent #4380.">
 <meta property="og:title" content="Optic AI — the onchain alpha desk">
-<meta property="og:description" content="Seven pay-per-call market intelligence services, settled on-chain via x402 on X Layer. The edge was never inside one market — it's in the gap between them.">
+<meta property="og:description" content="Nine pay-per-call market intelligence services — read, research, and a ready-to-place order — settled on-chain via x402 on X Layer. The edge was never inside one market; it's in the gap between them.">
 <meta property="og:image" content="/assets/img/poster.jpg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://optic-ai.xyz">
@@ -110,15 +110,19 @@ section{padding:104px 0;border-bottom:1px solid var(--line);position:relative}
 .reveal.in{opacity:1;transform:none}
 
 /* engine */
-.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:52px}
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:52px}
 .step{background:var(--panel);padding:34px 30px 32px;position:relative;transition:background .3s}
+.engine-art{margin:40px 0 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#05070d}
+.engine-art img{display:block;width:100%;height:auto}
+.engine-art figcaption{font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--muted);padding:14px 20px;border-top:1px solid var(--line);text-align:center}
 .step:hover{background:var(--panel2)}
 .step::before{content:"";position:absolute;top:0;left:0;width:0;height:2px;background:var(--amber);transition:width .35s ease}
 .step:hover::before{width:100%}
 .step .sn{font-family:var(--mono);font-weight:600;font-size:11.5px;letter-spacing:.22em;color:var(--amber)}
 .step h3{font-family:var(--serif);font-weight:400;font-size:27px;color:var(--paper);margin:16px 0 12px;letter-spacing:0}
 .step p{margin:0;font-size:14.5px;color:var(--muted);line-height:1.65}
-@media(max-width:860px){.pipe{grid-template-columns:1fr}}
+@media(max-width:1080px){.pipe{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.pipe{grid-template-columns:1fr}}
 
 /* services */
 .svc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;margin-top:56px}
@@ -166,7 +170,7 @@ figure{margin:0}
 .endpoints td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--soft)}
 .endpoints tr:hover td{background:rgba(232,235,242,.015)}
 .endpoints td:first-child{font-family:var(--mono);font-size:13px;color:var(--paper)}
-.endpoints td:nth-child(2){font-family:var(--mono);font-weight:600;color:var(--amber)}
+.endpoints td:nth-child(3){font-family:var(--mono);font-weight:600;color:var(--amber)}
 .tblwrap{overflow-x:auto}
 
 /* closing + footer */
@@ -204,9 +208,9 @@ footer{padding:46px 0 66px}
   <canvas id="fan" aria-hidden="true"></canvas>
   <div class="wrap hero">
     <div>
-      <span class="badge">Live on OKX.AI · Agent #4380</span>
+      <span class="badge">Live on OKX.AI · Agent #4380 · Nine services</span>
       <h1>The edge was never inside one market. <span class="gap">It's in the gap between them.</span></h1>
-      <p class="lead">Optic AI reads <b>memecoins, prediction markets, tokenized stocks and social attention</b> as one connected economy — does the research behind the numbers, and shows you exactly where those markets stop agreeing.</p>
+      <p class="lead">Optic AI reads <b>memecoins, prediction markets, tokenized stocks and social attention</b> as one connected economy — does the research behind the numbers, shows you where those markets stop agreeing, and hands your agent a ready-to-place order for the call.</p>
       <div class="hero-ctas">
         <a class="cta" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener">Use it on OKX.AI</a>
         <a class="ghost" href="#services">See the services</a>
@@ -232,24 +236,28 @@ footer{padding:46px 0 66px}
   <h2 class="h2 reveal">Markets disagree. That disagreement <em>is the signal.</em></h2>
   <p class="say reveal">Every market prices the same story differently — the chart, the odds, the crowd, the news. Single-domain agents read one and call it truth. Optic reads them together and reports the gap.</p>
   <div class="pipe reveal">
-    <div class="step"><div class="sn">01 — READ</div><h3>Every market at once</h3><p>OKX Trenches for onchain, Polymarket for outcomes, OKX xStocks for equities, OKX Social for attention — one query fans out across all of them.</p></div>
+    <div class="step"><div class="sn">01 — READ</div><h3>Every market at once</h3><p>OKX Trenches for onchain, OKX event contracts and Polymarket for outcomes, OKX xStocks for equities, OKX Social for attention — one query fans out across all of them.</p></div>
     <div class="step"><div class="sn">02 — RESEARCH</div><h3>The homework behind the numbers</h3><p>Live web research — form, injuries, earnings, catalysts — so a read is never just a volume printout. Sources cited on every brief.</p></div>
     <div class="step"><div class="sn">03 — SCORE</div><h3>Score the gap</h3><p>A 0–100 gap score — how far apart the markets are — a decisive verdict line, and a shareable card. Observational language, never a trade instruction.</p></div>
+    <div class="step"><div class="sn">04 — ACT</div><h3>Hand over the ticket</h3><p>Decided your call? Optic constructs the exact order — the market, the price, the size — ready to place. Your agent signs and submits with its own wallet. Optic never holds a key.</p></div>
   </div>
+  <figure class="engine-art reveal"><img loading="lazy" src="/assets/img/divergence.png" alt="Two market feeds tracking the same story, then diverging — the gap is the signal"><figcaption>Two venues, one story — until they diverge. That gap is the read.</figcaption></figure>
 </div></section>
 
 <section id="services"><div class="wrap">
-  <div class="shead reveal"><span class="sidx">02</span><span class="skick">Seven services · pay per call</span><span class="srule"></span></div>
+  <div class="shead reveal"><span class="sidx">02</span><span class="skick">Nine services · pay per call</span><span class="srule"></span></div>
   <h2 class="h2 reveal">One query, one price, <em>the full picture.</em></h2>
-  <p class="say reveal">Every read settles on-chain via x402 on X Layer and returns a JSON verdict plus a card. No subscriptions, no tiers to decode. These cards are real output.</p>
+  <p class="say reveal">Every call settles on-chain via x402 on X Layer and returns a JSON verdict plus a card. No subscriptions, no tiers to decode. These cards are real output.</p>
   <div class="svc-grid">
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/read.jpg" alt="Cross-market read sample card"></div><figcaption><span class="sn">Cross-Market Read</span><span class="sp">0.5 USDT</span><span class="sd">Any token or narrative, read across every market at once and scored for how much they disagree.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/daily.jpg" alt="Daily alpha sample card"></div><figcaption><span class="sn">Daily Alpha</span><span class="sp">0.5 USDT</span><span class="sd">Decisive, research-backed picks across prediction markets, meme momentum and supply risk.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/edge.jpg" alt="Edge radar sample card"></div><figcaption><span class="sn">Edge Radar</span><span class="sp">0.5 USDT</span><span class="sd">Where today's prices look soft or rich against the actual form, injuries and facts.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/stocks.jpg" alt="Stocks desk sample card"></div><figcaption><span class="sn">Stocks Desk</span><span class="sp">0.5 USDT</span><span class="sd">OKX tokenized equities read against real research and the analyst consensus.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/rug.jpg" alt="Rug radar sample card"></div><figcaption><span class="sn">Rug Radar</span><span class="sp">0.05 USDT</span><span class="sd">A 0–100 token safety score with the receipts: holder clusters, dev history, LP status.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/smart.jpg" alt="Smart money sample card"></div><figcaption><span class="sn">Smart Money</span><span class="sp">0.05 USDT</span><span class="sd">The tokens sharp onchain wallets are accumulating, before the crowd notices.</span></figcaption></figure></a>
-    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/timing.jpg" alt="Narrative timing sample card"></div><figcaption><span class="sn">Narrative Timing</span><span class="sp">0.05 USDT</span><span class="sd">Early or late — where any token sits in its lifecycle, from igniting to cooling.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/read.jpg" alt="Full Market Check sample card"></div><figcaption><span class="sn">Full Market Check</span><span class="sp">0.5 USDT</span><span class="sd">One question, checked across every market — odds, onchain data, attention and web research in a single read.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/daily.jpg" alt="Today's Picks sample card"></div><figcaption><span class="sn">Today's Picks</span><span class="sp">0.5 USDT</span><span class="sd">The day's strongest calls with the reasons — each with the evidence and a confidence tag.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/edge.jpg" alt="Mispriced Markets sample card"></div><figcaption><span class="sn">Mispriced Markets</span><span class="sp">0.5 USDT</span><span class="sd">Where today's prices look wrong against the actual form, injuries and facts.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/pulse.png" alt="5-Minute Pulse sample card"></div><figcaption><span class="sn">5-Minute Pulse</span><span class="sp">0.05 USDT</span><span class="sd">The same 5-minute up/down window priced on two venues — both prices and the gap, for BTC, ETH and SOL.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/ticket.png" alt="Order Ticket sample card"></div><figcaption><span class="sn">Order Ticket</span><span class="sp">0.1 USDT</span><span class="sd">Turns a decided position into a ready-to-place order — you sign and submit with your own wallet.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/stocks.jpg" alt="Stock Check sample card"></div><figcaption><span class="sn">Stock Check</span><span class="sp">0.5 USDT</span><span class="sd">One stock, all angles — the OKX tokenized share price against research and the analyst consensus.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/rug.jpg" alt="Token Safety Check sample card"></div><figcaption><span class="sn">Token Safety Check</span><span class="sp">0.05 USDT</span><span class="sd">How safe a token looks before you touch it — holders, liquidity, dev history, scored 0–100.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/smart.jpg" alt="Smart Money Watch sample card"></div><figcaption><span class="sn">Smart Money Watch</span><span class="sp">0.05 USDT</span><span class="sd">The tokens sharp onchain wallets are accumulating, before the crowd notices.</span></figcaption></figure></a>
+    <a class="svc reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener"><figure><div class="imgwrap"><img loading="lazy" src="/assets/img/timing.jpg" alt="Too Early or Too Late sample card"></div><figcaption><span class="sn">Too Early or Too Late?</span><span class="sp">0.05 USDT</span><span class="sd">Where a token's story sits in its lifecycle — early, crowded or fading.</span></figcaption></figure></a>
   </div>
 </div></section>
 
@@ -291,15 +299,17 @@ curl -X POST <span class="t">…/v1/rug</span> -H <span class="a">"PAYMENT-SIGNA
   -H "Content-Type: application/json" -d '{"query":"&lt;token&gt;"}'</pre>
   </div>
   <div class="tblwrap reveal"><table class="endpoints">
-    <thead><tr><th>Endpoint</th><th>Price</th><th>Input</th></tr></thead>
+    <thead><tr><th>Endpoint</th><th>Service</th><th>Price</th><th>Input</th></tr></thead>
     <tbody>
-      <tr><td>POST /v1/read</td><td>0.5</td><td>token address, ticker, or a narrative in plain words</td></tr>
-      <tr><td>POST /v1/daily</td><td>0.5</td><td>none — returns today's picks</td></tr>
-      <tr><td>POST /v1/edge</td><td>0.5</td><td>none — returns today's mispricing scan</td></tr>
-      <tr><td>POST /v1/stocks</td><td>0.5</td><td>stock ticker or company name</td></tr>
-      <tr><td>POST /v1/rug</td><td>0.05</td><td>token address or ticker</td></tr>
-      <tr><td>POST /v1/smart-money</td><td>0.05</td><td>none — returns current accumulation</td></tr>
-      <tr><td>POST /v1/timing</td><td>0.05</td><td>token address or ticker</td></tr>
+      <tr><td>POST /v1/read</td><td>Full Market Check</td><td>0.5</td><td>token address, ticker, event or a narrative in plain words</td></tr>
+      <tr><td>POST /v1/daily</td><td>Today's Picks</td><td>0.5</td><td>none — returns today's picks</td></tr>
+      <tr><td>POST /v1/edge</td><td>Mispriced Markets</td><td>0.5</td><td>none — returns today's mispricing scan</td></tr>
+      <tr><td>POST /v1/stocks</td><td>Stock Check</td><td>0.5</td><td>stock ticker or company name</td></tr>
+      <tr><td>POST /v1/ticket</td><td>Order Ticket</td><td>0.1</td><td>market in plain words, side (yes/no), size</td></tr>
+      <tr><td>POST /v1/pulse</td><td>5-Minute Pulse</td><td>0.05</td><td>none — returns the current cross-venue pulse</td></tr>
+      <tr><td>POST /v1/rug</td><td>Token Safety Check</td><td>0.05</td><td>token address or ticker</td></tr>
+      <tr><td>POST /v1/smart-money</td><td>Smart Money Watch</td><td>0.05</td><td>none — returns current accumulation</td></tr>
+      <tr><td>POST /v1/timing</td><td>Too Early or Too Late?</td><td>0.05</td><td>token address or ticker</td></tr>
     </tbody>
   </table></div>
 </div></section>
@@ -307,7 +317,7 @@ curl -X POST <span class="t">…/v1/rug</span> -H <span class="a">"PAYMENT-SIGNA
 <div class="fin">
   <div class="wrap">
     <h2 class="h2 reveal">Stop reading one market. <em>Read the gap.</em></h2>
-    <p class="reveal">Seven services, from five cents a call. Live now on the OKX.AI agent marketplace.</p>
+    <p class="reveal">Nine services, from five cents a call — read, research, and a ready-to-place order. Live now on the OKX.AI agent marketplace.</p>
     <a class="cta reveal" href="https://www.okx.ai/agents/4380" target="_blank" rel="noopener">Use Optic AI → Agent #4380</a>
   </div>
 </div>

@@ -227,13 +227,14 @@ payment-required: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50...</code></pre>
     <p>Most market data services see exactly one venue — a chart, an order book, a news feed. Optic reads across venue <em>types</em> and reports where they stop agreeing.</p>
     <div class="cards">
       <div class="card"><b>Memecoins</b><span>Price, liquidity, holders, dev flags — OKX market data</span></div>
-      <div class="card"><b>Prediction markets</b><span>Polymarket odds + 24h momentum</span></div>
+      <div class="card"><b>Prediction markets</b><span>OKX event contracts + Polymarket odds &amp; momentum</span></div>
       <div class="card"><b>Tokenized stocks</b><span>OKX xStocks vs the real close</span></div>
       <div class="card"><b>Social attention</b><span>OKX Social: hotness, sentiment, KOLs</span></div>
       <div class="card"><b>News &amp; supply</b><span>Unlock calendar + research headlines</span></div>
       <div class="card"><b>Web research</b><span>Real-world context behind the odds</span></div>
     </div>
     <p>One engine, applied through those lenses: <code>narrative → attention → per-venue read → divergence → verdict + card</code>. The divergence score is the product. When every venue agrees, the story is priced in. When they don't, that gap is the signal.</p>
+    <p>And once you've decided your call, <strong>Order Ticket</strong> closes the loop: Optic constructs the exact order across OKX event contracts, 5-minute markets or Polymarket, and your agent places it with its own wallet — research to conviction to a signable order, without ever handing over a key.</p>
 
     <!-- ───────── SERVICES ───────── -->
     <h2 id="services">Services</h2>
@@ -241,23 +242,30 @@ payment-required: eyJ4NDAyVmVyc2lvbiI6MiwiZXJyb3IiOiJQYXltZW50...</code></pre>
     <p>All paid routes are <strong>POST-only</strong> and return <code>402</code> with a payment challenge until settled with USDT0 on <code>eip155:196</code>. A <code>GET</code> on a paid route returns <code>405</code> — this is expected and matches the approved OKX A2MCP pattern.</p>
 
     <table>
-      <thead><tr><th>Method</th><th>Path</th><th>Price</th><th>Purpose</th></tr></thead>
+      <thead><tr><th>Method</th><th>Path</th><th>Service</th><th>Price</th><th>Purpose</th></tr></thead>
       <tbody>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/read</code></td><td class="price">0.50</td><td>Cross-venue market read on any token, ticker or narrative — verdict JSON + card</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/daily</code></td><td class="price">0.50</td><td>Daily alpha — today's research-backed picks across prediction, meme momentum and supply risk</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/edge</code></td><td class="price">0.50</td><td>Edge radar — where today's prices look wrong versus the research</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/stocks</code></td><td class="price">0.50</td><td>Stocks desk — OKX tokenized share (xStock) vs real close vs analyst consensus</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/rug</code></td><td class="price">0.05</td><td>Rug radar — 0–100 token safety score with the red flags</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/smart-money</code></td><td class="price">0.05</td><td>Smart money — tokens sharp wallets are accumulating right now</td></tr>
-        <tr><td><span class="m post">POST</span></td><td><code>/v1/timing</code></td><td class="price">0.05</td><td>Narrative timing — is a token's story early or already over</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/read</code></td><td>Full Market Check</td><td class="price">0.50</td><td>Cross-venue market read on any token, ticker, event or narrative — verdict JSON + card</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/daily</code></td><td>Today's Picks</td><td class="price">0.50</td><td>The day's research-backed calls across prediction markets, meme momentum and supply risk</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/edge</code></td><td>Mispriced Markets</td><td class="price">0.50</td><td>Where today's prices look wrong versus the research</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/stocks</code></td><td>Stock Check</td><td class="price">0.50</td><td>OKX tokenized share (xStock) vs real close vs analyst consensus</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/ticket</code></td><td>Order Ticket</td><td class="price">0.10</td><td>Turns a decided position into a ready-to-place order the caller submits with its own wallet</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/pulse</code></td><td>5-Minute Pulse</td><td class="price">0.05</td><td>The same 5-minute up/down window priced on OKX event contracts and Polymarket, with the divergence</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/rug</code></td><td>Token Safety Check</td><td class="price">0.05</td><td>0–100 token safety score with the red flags</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/smart-money</code></td><td>Smart Money Watch</td><td class="price">0.05</td><td>Tokens sharp wallets are accumulating right now</td></tr>
+        <tr><td><span class="m post">POST</span></td><td><code>/v1/timing</code></td><td>Too Early or Too Late?</td><td class="price">0.05</td><td>Whether a token's story is early or already over</td></tr>
       </tbody>
     </table>
 
     <h3>Request body</h3>
     <p>Query-scoped services (<code>/v1/read</code>, <code>/v1/rug</code>, <code>/v1/timing</code>, <code>/v1/stocks</code>) take a subject:</p>
     <pre><code>{ <span class="k">"query"</span>: <span class="s">"NVDA"</span>, <span class="k">"chain"</span>: <span class="s">"solana"</span> }   <span class="c">// chain optional</span></code></pre>
-    <p><code>query</code> accepts a token address, a ticker, or a narrative in plain words. Discovery services (<code>/v1/daily</code>, <code>/v1/edge</code>, <code>/v1/smart-money</code>) ignore the body — they scan the whole market:</p>
+    <p><code>query</code> accepts a token address, a ticker, or a narrative in plain words. Discovery services (<code>/v1/daily</code>, <code>/v1/edge</code>, <code>/v1/smart-money</code>, <code>/v1/pulse</code>) ignore the body — they scan the whole market:</p>
     <pre><code>{}</code></pre>
+
+    <h3><code>/v1/ticket</code> — Order Ticket</h3>
+    <p>Order <strong>construction</strong>, never execution. Optic resolves the live market, reads the book, sizes the order and returns the exact payload; the caller signs and submits with its <strong>own</strong> OKX key or wallet plugin. No trade key ever touches this server.</p>
+    <pre><code>{ <span class="k">"query"</span>: <span class="s">"btc above 60000 tomorrow"</span>, <span class="k">"side"</span>: <span class="s">"yes"</span>, <span class="k">"usdt"</span>: <span class="n">25</span> }</code></pre>
+    <p>Three venues resolve automatically: OKX event contracts (USDT-settled crypto/gold price events), 5-minute up/down markets, and Polymarket's full Yes/No catalogue (sports, elections). The response carries either a signable <code>draft</code> (OKX rail) or a ready-to-run <code>plugin_rail.command</code> (Polymarket via the OKX plugin). A market that can't be constructed returns <code>404</code> before settlement — the caller is never charged for a ticket that can't exist.</p>
 
     <div class="note">
       <b>Sibling agent.</b> <code>POST /v1/touchgrass</code> (0.10) runs on this same origin but belongs to <strong>TouchGrass</strong>, a separate Lifestyle agent — onchain wellness patterns from wallet behavior. It is not part of the Optic AI service lineup.
