@@ -10,6 +10,7 @@ import { join } from "node:path";
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
+import sharp from "sharp";
 import { config } from "../config.js";
 import type { BudgetGuard } from "../pipeline/budget.js";
 import { saveAsset } from "./shared.js";
@@ -36,12 +37,35 @@ const FONTS = [
 
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/**
+ * Guarantee a visible hero: Venice output is stochastic and some scenes come back
+ * near-black, which reads as a blank image. If mean luminance is below a floor, lift
+ * it (linear gain + small offset) so there's always a discernible picture.
+ */
+async function ensureVisible(png: Buffer): Promise<Buffer> {
+  try {
+    const stats = await sharp(png).stats();
+    const mean = stats.channels.slice(0, 3).reduce((s, c) => s + c.mean, 0) / 3;
+    if (mean >= 38) return png; // already legible
+    const gain = Math.min(3.4, 52 / Math.max(mean, 6));
+    return await sharp(png).linear(gain, 6).png().toBuffer();
+  } catch {
+    return png; // never fail the render over a brightness tweak
+  }
+}
+
 async function veniceScene(subject: string, budget: BudgetGuard): Promise<Buffer | null> {
   if (!config.veniceApiKey) return null;
   budget.register("venice:asset", VENICE_COST_USD);
+  // Hero images are the WHOLE frame (only a title composited on top), so the scene
+  // itself must carry real luminance — a clearly lit focal subject and a deep charcoal
+  // (not pure black) ground. The earlier "very dark near-black" prompt rendered plain
+  // subjects as near-black frames that read as blank on-screen.
   const prompt =
-    `${subject}, very dark near-black cinematic composition, dramatic rim light, fine particle detail, ` +
-    `deep negative space, subtle film grain, minimal, elegant, no text no letters no numbers no watermark`;
+    `${subject}, cinematic hero image with a clearly lit luminous focal subject, ` +
+    `dramatic studio lighting, soft glow and rim light, volumetric light and atmospheric depth, ` +
+    `deep charcoal background (never pure black), rich but well-exposed, elegant, high detail, ` +
+    `no text no letters no numbers no watermark`;
   const res = await fetch("https://api.venice.ai/api/v1/image/generate", {
     method: "POST",
     headers: { Authorization: `Bearer ${config.veniceApiKey}`, "Content-Type": "application/json" },
@@ -73,10 +97,11 @@ export async function makeAsset(
   budget: BudgetGuard
 ): Promise<AssetResult> {
   const id = randomUUID();
-  const bg = await veniceScene(opts.query, budget).catch((err) => {
+  const raw = await veniceScene(opts.query, budget).catch((err) => {
     console.error(`venice asset failed: ${err}`);
     return null;
   });
+  const bg = raw ? await ensureVisible(raw) : null;
 
   const under =
     `<rect width="${W}" height="${H}" fill="#05070d"/>` +
