@@ -14,7 +14,46 @@ import sharp from "sharp";
 import { config } from "../config.js";
 import type { BudgetGuard } from "../pipeline/budget.js";
 import { saveAsset } from "./shared.js";
+import { structuredCall } from "../lib/anthropic.js";
 import { isCliEntry } from "../fixtures.js";
+
+const BRIEF_SCHEMA = {
+  type: "object",
+  properties: {
+    mood: { type: "string", maxLength: 60 },
+    motifs: { type: "string", maxLength: 160 },
+    palette: { type: "string", maxLength: 80 },
+  },
+  required: ["mood", "motifs", "palette"],
+  additionalProperties: false,
+} as const;
+
+/**
+ * Turn a buyer's description into an ABSTRACT visual brief (mood/motifs/palette only)
+ * so the literal phrase never reaches the image model — which otherwise bakes the
+ * marketing words into the picture as text. Falls back to a neutral brand brief.
+ */
+async function visualBrief(subject: string, budget: BudgetGuard): Promise<{ mood: string; motifs: string; palette: string }> {
+  try {
+    return await structuredCall<{ mood: string; motifs: string; palette: string }>({
+      label: "asset-brief",
+      system:
+        "You turn a product/brand description into an ABSTRACT visual brief for a background banner. " +
+        "Output ONLY visual qualities — light, shape, texture, colour, atmosphere. NEVER include any " +
+        "literal words, names, brands, objects, people, or phrases from the input; the image must contain " +
+        "no text and no recognizable subjects. mood: 2-4 adjectives. motifs: abstract forms/light only. " +
+        "palette: 2-3 colours that suit the theme (may lean on deep charcoal, amber, teal).",
+      user: subject.slice(0, 300),
+      schema: BRIEF_SCHEMA as unknown as Record<string, unknown>,
+      budget,
+      maxTokens: 200,
+      effort: "low",
+    });
+  } catch (err) {
+    console.error(`asset brief fell back: ${err}`);
+    return { mood: "calm, premium, cinematic", motifs: "flowing gradient mesh, soft volumetric light, drifting particles", palette: "deep charcoal, warm amber, cool teal" };
+  }
+}
 
 const W = 1200;
 const H = 675;
@@ -54,22 +93,27 @@ async function ensureVisible(png: Buffer): Promise<Buffer> {
   }
 }
 
-async function veniceScene(subject: string, budget: BudgetGuard): Promise<Buffer | null> {
+async function veniceScene(brief: { mood: string; motifs: string; palette: string }, budget: BudgetGuard): Promise<Buffer | null> {
   if (!config.veniceApiKey) return null;
   budget.register("venice:asset", VENICE_COST_USD);
-  // Hero images are the WHOLE frame (only a title composited on top), so the scene
-  // itself must carry real luminance — a clearly lit focal subject and a deep charcoal
-  // (not pure black) ground. The earlier "very dark near-black" prompt rendered plain
-  // subjects as near-black frames that read as blank on-screen.
+  // This is a BRANDED HEADER, not a photo — the title/subtitle are composited on top,
+  // so the background must be an ABSTRACT, textless, subjectless field. We feed only the
+  // abstract brief (mood/motifs/palette), never the buyer's literal phrase, so the model
+  // can't bake the marketing words into the picture. Every literal subject + text is
+  // hard-negatived as a second line of defence.
   const prompt =
-    `${subject}, cinematic hero image with a clearly lit luminous focal subject, ` +
-    `dramatic studio lighting, soft glow and rim light, volumetric light and atmospheric depth, ` +
-    `deep charcoal background (never pure black), rich but well-exposed, elegant, high detail, ` +
-    `no text no letters no numbers no watermark`;
+    `Abstract premium tech brand banner. Mood: ${brief.mood}. Motifs: ${brief.motifs}. ` +
+    `Palette: ${brief.palette}. Flowing gradient mesh, soft volumetric light, fine particles and gentle ` +
+    `bokeh, deep charcoal ground (never pure black), cinematic, elegant, well-exposed, with calm negative ` +
+    `space toward the lower-left. Purely abstract — no recognizable objects.`;
+  const negative_prompt =
+    "text, letters, words, writing, typography, caption, numbers, logo, watermark, signature, " +
+    "person, people, human, man, woman, face, portrait, figure, silhouette, body, hands, character, " +
+    "mascot, animal, product shot, object, frame, border";
   const res = await fetch("https://api.venice.ai/api/v1/image/generate", {
     method: "POST",
     headers: { Authorization: `Bearer ${config.veniceApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "z-image-turbo", prompt, width: W, height: H, format: "png", safe_mode: true, hide_watermark: true }),
+    body: JSON.stringify({ model: "z-image-turbo", prompt, negative_prompt, width: W, height: H, format: "png", safe_mode: true, hide_watermark: true }),
     signal: AbortSignal.timeout(45_000),
   });
   if (!res.ok) {
@@ -97,7 +141,8 @@ export async function makeAsset(
   budget: BudgetGuard
 ): Promise<AssetResult> {
   const id = randomUUID();
-  const raw = await veniceScene(opts.query, budget).catch((err) => {
+  const brief = await visualBrief(opts.query, budget);
+  const raw = await veniceScene(brief, budget).catch((err) => {
     console.error(`venice asset failed: ${err}`);
     return null;
   });
