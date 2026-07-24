@@ -102,7 +102,20 @@ export async function computeDivergence(
       maxTokens: 700,
     });
 
-    const { verdict_line, ...divergence } = out;
+    // Coerce a safe shape — smaller models occasionally omit a field or return the
+    // wrong type; never crash on that, and never ship undefined into the card/db.
+    const raw = out as unknown as Record<string, unknown>;
+    const divergence: Divergence = {
+      score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : 50,
+      direction: (typeof raw.direction === "string" ? raw.direction : "aligned") as Divergence["direction"],
+      one_liner: typeof raw.one_liner === "string" ? raw.one_liner : "",
+      reasoning: Array.isArray(raw.reasoning) ? raw.reasoning.filter((r): r is string => typeof r === "string") : [],
+    };
+    const verdict_line =
+      typeof raw.verdict_line === "string" && raw.verdict_line.trim()
+        ? raw.verdict_line
+        : `${resolved.name}: ${divergence.one_liner || "markets read together across venues."}`;
+
     const lint = lintVerdictStrings([verdict_line, divergence.one_liner, ...divergence.reasoning]);
     if (lint.ok) {
       return { divergence, verdict_line };

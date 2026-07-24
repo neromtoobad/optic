@@ -1,16 +1,25 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
 import type { BudgetGuard } from "../pipeline/budget.js";
 
-const MODEL = "claude-opus-4-8";
-const INPUT_USD_PER_TOKEN = 5 / 1_000_000;
-const OUTPUT_USD_PER_TOKEN = 25 / 1_000_000;
+// The narrative brain runs on Venice's OpenAI-compatible text API — one key for
+// both image generation and LLM work, no separate Anthropic account/credit. The
+// export name (`structuredCall`) and signature are unchanged so every caller keeps
+// working; only the provider behind it changed.
+const ENDPOINT = "https://api.venice.ai/api/v1/chat/completions";
 
-const client = new Anthropic({
-  apiKey: config.anthropicApiKey,
-  timeout: 30_000,
-  maxRetries: 1,
-});
+// Model-fallback chain: if one is overloaded, errors, or returns unparseable JSON
+// we fall through to the next. Cheapest/most-reliable first (verified live). Open
+// models vary run-to-run, so the parse is defensive and every caller keeps its own
+// fallback for a bad/absent result.
+// gemini-3-6-flash is the most reliable at clean JSON in testing; the lite model is
+// the second try, then we retry the primary (failures are usually transient overload).
+const MODELS = ["gemini-3-6-flash", "gemini-3-5-flash-lite", "gemini-3-6-flash"];
+
+// Rough text-token pricing for the budget guard (Venice text is cheap); the guard
+// only needs a sane number to keep per-read COGS bounded.
+const IN_USD_PER_TOKEN = 0.6 / 1_000_000;
+const OUT_USD_PER_TOKEN = 1.8 / 1_000_000;
+const PER_MODEL_TIMEOUT_MS = 22_000;
 
 /**
  * Model-emitted strings occasionally carry literal control characters mid-sentence
@@ -31,8 +40,85 @@ function sanitizeStrings<T>(value: T): T {
 }
 
 /**
- * Structured call: schema-constrained JSON out (output_config.format), actual
- * token cost registered with the read's budget guard.
+ * Pull a JSON object out of a model reply and REPAIR it. Small models frequently
+ * emit valid JSON with the closing brace(s) cut off (all fields present, no final
+ * `}`), which naive parsing rejects. We walk from the first `{`, and if the direct
+ * parse fails, close any open strings/brackets/braces and drop trailing commas.
+ */
+function extractJson(content: string): unknown {
+  const cleaned = content.replace(/```(?:json)?/gi, "");
+  const start = cleaned.indexOf("{");
+  if (start < 0) throw new Error("no JSON object in reply");
+
+  // Fast path: a well-formed object with a matching close.
+  const end = cleaned.lastIndexOf("}");
+  if (end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      /* fall through to repair */
+    }
+  }
+
+  // Repair path: balance from the first `{`.
+  const s = cleaned.slice(start);
+  const stack: string[] = [];
+  let inStr = false;
+  let esc = false;
+  let out = "";
+  for (const ch of s) {
+    out += ch;
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  if (inStr) out += '"';
+  out = out.replace(/,\s*$/, ""); // dangling comma from a cut-off field list
+  while (stack.length) out += stack.pop();
+  return JSON.parse(out);
+}
+
+/**
+ * If a schema is exactly one required string property, return its {key, maxLength}.
+ * For those we skip JSON entirely — small models reliably return a bare line but
+ * garble the JSON wrapper for short creative outputs — and clean/wrap the reply.
+ */
+function singleStringField(schema: Record<string, unknown>): { key: string; maxLength?: number } | null {
+  const props = schema.properties as Record<string, { type?: string; maxLength?: number }> | undefined;
+  const req = schema.required as string[] | undefined;
+  if (props && req && req.length === 1 && Object.keys(props).length === 1) {
+    const k = req[0];
+    if (props[k]?.type === "string") return { key: k, maxLength: props[k].maxLength };
+  }
+  return null;
+}
+
+/** Clean a bare one-line reply: drop fences, wrapping quotes, and leading labels. */
+function cleanLine(content: string, maxLength?: number): string {
+  let s = content.replace(/```[a-z]*\n?/gi, "").trim();
+  s = s.split("\n").map((l) => l.trim()).filter(Boolean)[0] ?? ""; // first real line
+  s = s.replace(/^(?:here(?:'s| is)[^:]*:|tagline:|line:|answer:|output:|format\**:)\s*/i, "");
+  s = s.replace(/^["'`*]+|["'`*]+$/g, "").trim();
+  if (maxLength && s.length > maxLength) {
+    s = s.slice(0, maxLength);
+    const lastSpace = s.lastIndexOf(" ");
+    if (lastSpace > maxLength * 0.6) s = s.slice(0, lastSpace); // cut on a word boundary
+    s = s.replace(/[\s,;:—-]+$/, "").trim();
+  }
+  return s;
+}
+
+/**
+ * Structured call: schema-constrained JSON out. The schema is injected into the
+ * system prompt (Venice models honour that more reliably than response_format,
+ * whose support is inconsistent across the model zoo); the reply's JSON is then
+ * extracted and parsed. Actual token cost is registered with the read's budget.
  */
 export async function structuredCall<T>(opts: {
   label: string;
@@ -41,35 +127,68 @@ export async function structuredCall<T>(opts: {
   schema: Record<string, unknown>;
   budget: BudgetGuard;
   maxTokens?: number;
-  effort?: "low" | "medium" | "high";
+  effort?: "low" | "medium" | "high"; // accepted for compatibility; Venice has no effort knob
 }): Promise<T> {
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: opts.maxTokens ?? 1024,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.user }],
-    output_config: {
-      format: { type: "json_schema", schema: opts.schema },
-      ...(opts.effort ? { effort: opts.effort } : {}),
-    },
-  });
+  if (!config.veniceApiKey) throw new Error(`llm:${opts.label} — VENICE_API_KEY not set`);
 
-  const cost =
-    response.usage.input_tokens * INPUT_USD_PER_TOKEN +
-    response.usage.output_tokens * OUTPUT_USD_PER_TOKEN;
-  // Registered after the call (actual usage); the guard still fails the read
-  // cleanly if the cap is crossed before any further external spend.
-  opts.budget.register(`anthropic:${opts.label}`, cost);
+  // Single-string outputs (taglines, one-liners): ask for the bare line, not JSON —
+  // small models garble the wrapper for short creative text. Everything else: JSON.
+  const single = singleStringField(opts.schema);
+  const system = single
+    ? `${opts.system}\n\nReply with ONLY the finished text on a single line — no quotes, no labels, no JSON, no markdown, no explanation.`
+    : `${opts.system}\n\nReply with ONLY a single minified JSON object that conforms to this JSON Schema — ` +
+      `no prose, no explanation, no markdown, no code fences.\nJSON Schema: ${JSON.stringify(opts.schema)}`;
 
-  if (response.stop_reason === "refusal") {
-    throw new Error(`anthropic:${opts.label} refused`);
+  let lastErr: unknown;
+  for (const model of MODELS) {
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${config.veniceApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: opts.user },
+          ],
+          max_tokens: opts.maxTokens ?? 1024,
+          temperature: 0.6,
+        }),
+        signal: AbortSignal.timeout(PER_MODEL_TIMEOUT_MS),
+      });
+      if (!res.ok) {
+        lastErr = new Error(`${model} HTTP ${res.status}`);
+        continue;
+      }
+      const json = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+        error?: unknown;
+      };
+      const content = json.choices?.[0]?.message?.content;
+      if (json.error || !content) {
+        lastErr = new Error(`${model}: ${JSON.stringify(json.error ?? "no content")}`);
+        continue;
+      }
+      let obj: unknown;
+      if (single) {
+        const line = cleanLine(content, single.maxLength);
+        // Reject a reply that's still meta/garbage rather than ship it.
+        if (!line || /[{}]|```|"?json"?\s*:/i.test(line)) {
+          lastErr = new Error(`${model}: unusable single-line reply`);
+          continue;
+        }
+        obj = { [single.key]: line };
+      } else {
+        obj = extractJson(content); // throws → next model
+      }
+      const parsed = sanitizeStrings(obj) as T;
+      const cost = (json.usage?.prompt_tokens ?? 0) * IN_USD_PER_TOKEN + (json.usage?.completion_tokens ?? 0) * OUT_USD_PER_TOKEN;
+      opts.budget.register(`venice-text:${opts.label}`, cost || 0.002);
+      return parsed;
+    } catch (err) {
+      lastErr = err; // overload / timeout / unparseable → try the next model
+    }
   }
-  const text = response.content.find((b) => b.type === "text");
-  if (!text || text.type !== "text") {
-    throw new Error(`anthropic:${opts.label} returned no text block (stop=${response.stop_reason})`);
-  }
-  // Sanitize model-emitted strings (stray \r/\n control chars) before they reach
-  // the db, the API response, or the card renderer.
-  return sanitizeStrings(JSON.parse(text.text)) as T;
+  throw new Error(`llm:${opts.label} failed across ${MODELS.length} models — ${lastErr instanceof Error ? lastErr.message : lastErr}`);
 }
-

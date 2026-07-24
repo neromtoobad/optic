@@ -55,8 +55,8 @@ const VIBE_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-// The API's structured-output schema can't carry integer bounds — clamp here instead.
-const clampBeat = (n: number): number => Math.min(900, Math.max(120, Math.round(n)));
+// Clamp to the sane motion range; default to 220ms if the model omits/garbles it.
+const clampBeat = (n: number): number => (Number.isFinite(n) ? Math.min(900, Math.max(120, Math.round(n))) : 220);
 
 export async function makeBrandKit(query: string, budget: BudgetGuard): Promise<BrandKit | null> {
   const agentId = normalizeAgentId(query);
