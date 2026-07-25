@@ -486,17 +486,24 @@ const HeroImage: React.FC = () => {
   const frame = useCurrentFrame();
   const prompt = '"an AI security agent that guards onchain wallets"';
   const imgAt = 72;
-  const k = interpolate(frame, [imgAt, imgAt + 300], [1, 1.07], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // Gentle push-in only — a bigger scale crops the composited title off the bottom,
+  // which is the one thing this scene exists to prove.
+  const k = interpolate(frame, [imgAt, imgAt + 300], [1, 1.03], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const W_IMG = 1080;
   return (
-    <Stage gap={30}>
+    // own layout (not Stage): the hero panel must never be flex-shrunk, or the
+    // bottom of the image — where the title sits — gets clipped away.
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20, padding: "124px 120px 168px" }}>
       <Eyebrow delay={2} color={C.teal}>02 · Hero Image Studio · 0.1 USDT</Eyebrow>
-      <div style={{ fontFamily: F.mono, fontSize: 30, color: C.amber2, opacity: fadeIn(frame, 10), minHeight: 42 }}>
+      <div style={{ fontFamily: F.mono, fontSize: 28, color: C.amber2, opacity: fadeIn(frame, 10), minHeight: 40, flexShrink: 0 }}>
         {typed(prompt, frame, 14, 44)}
         <span style={{ opacity: frame % 20 < 10 ? 1 : 0, color: C.text }}>▌</span>
       </div>
       <div
         style={{
-          width: 1300,
+          width: W_IMG,
+          height: Math.round((W_IMG * 675) / 1200),
+          flexShrink: 0,
           borderRadius: 18,
           overflow: "hidden",
           border: `1px solid ${C.line}`,
@@ -505,12 +512,12 @@ const HeroImage: React.FC = () => {
           transform: `translateY(${rise(frame, imgAt, 28, 20)}px)`,
         }}
       >
-        <Img src={staticFile("hero-shield.png")} style={{ width: "100%", display: "block", transform: `scale(${k})` }} />
+        <Img src={staticFile("hero-shield.png")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: `scale(${k})` }} />
       </div>
-      <div style={{ fontFamily: F.mono, fontSize: 21, color: C.sub, opacity: fadeIn(frame, imgAt + 40) }}>
-        1200 × 675 · your title set in real type
+      <div style={{ fontFamily: F.mono, fontSize: 20, color: C.sub, opacity: fadeIn(frame, imgAt + 40), flexShrink: 0 }}>
+        1200 × 675 · title and strapline set in real type
       </div>
-    </Stage>
+    </AbsoluteFill>
   );
 };
 
