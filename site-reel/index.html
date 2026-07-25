@@ -11,17 +11,18 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="/media/avatar.png">
 <style>
-  @font-face { font-family:'Space Grotesk'; font-weight:500; src:url('/assets/fonts/sg-500.woff') format('woff'); font-display:swap; }
-  @font-face { font-family:'Space Grotesk'; font-weight:700; src:url('/assets/fonts/sg-700.woff') format('woff'); font-display:swap; }
-  @font-face { font-family:'IBM Plex Mono'; font-weight:400; src:url('/assets/fonts/ipm-400.woff') format('woff'); font-display:swap; }
-  @font-face { font-family:'IBM Plex Mono'; font-weight:600; src:url('/assets/fonts/ipm-600.woff') format('woff'); font-display:swap; }
+  /* Geist + Geist Mono, vendored (variable weight) so nothing depends on a font CDN. */
+  @font-face { font-family:'Geist'; font-weight:100 900; font-style:normal;
+               src:url('/assets/fonts/geist.woff2') format('woff2'); font-display:swap; }
+  @font-face { font-family:'Geist Mono'; font-weight:100 900; font-style:normal;
+               src:url('/assets/fonts/geist-mono.woff2') format('woff2'); font-display:swap; }
 
   :root{
     --bg:#05070d; --panel:#0b0e16; --panel2:#0e121c; --line:rgba(255,255,255,.10);
     --ink:#eef1f6; --sub:#aab2c2; --mute:#6d7688;
     --amber:#f5a623; --amber2:#ffc65c; --teal:#4be3c3; --red:#ff6b6b;
-    --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
-    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+    --sans:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'Geist Mono',ui-monospace,SFMono-Regular,monospace;
     color-scheme:dark;
   }
   *{box-sizing:border-box}
@@ -42,13 +43,16 @@
   .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:19px;letter-spacing:.2px;
          color:var(--ink)}
   .brand:hover{text-decoration:none;color:var(--ink)}
+  /* the nav link colour is more specific than .cta — pin the button label black */
+  nav .links a.cta{color:#000}
+  nav .links a.cta:hover{color:#000}
   nav .links a.cta:hover,.cta:hover{text-decoration:none}
   .brand img{width:34px;height:34px;border-radius:8px}
   .brand b{color:var(--amber);font-weight:700}
   nav .links{display:flex;align-items:center;gap:22px;font-size:14.5px;color:var(--sub)}
   nav .links a{color:var(--sub)}
   nav .links a:hover{color:var(--ink);text-decoration:none}
-  .cta{display:inline-flex;align-items:center;gap:9px;background:var(--amber);color:#1b1205;
+  .cta{display:inline-flex;align-items:center;gap:9px;background:var(--amber);color:#000;
        font-weight:700;font-size:14.5px;padding:10px 17px;border-radius:999px;white-space:nowrap;
        text-decoration:none}
   .cta:hover{background:var(--amber2);text-decoration:none}
@@ -61,7 +65,7 @@
                radial-gradient(42% 40% at 88% 8%,rgba(75,227,195,.13),transparent 62%);
     pointer-events:none}
   .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--mute)}
-  h1{font-size:clamp(34px,6vw,62px);line-height:1.03;letter-spacing:-1.6px;margin:18px 0 0;max-width:20ch;text-wrap:balance}
+  h1{font-size:clamp(34px,6vw,62px);line-height:1.03;letter-spacing:-1.1px;margin:18px 0 0;max-width:20ch;text-wrap:balance}
   h1 em{font-style:normal;color:var(--amber)}
   .lede{color:var(--sub);font-size:18.5px;line-height:1.62;margin:22px 0 0;max-width:62ch}
   .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
@@ -77,7 +81,7 @@
   /* ── sections ── */
   section{padding:64px 0;border-top:1px solid var(--line)}
   .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px}
-  .sec-head h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.8px;margin:0}
+  .sec-head h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.5px;margin:0}
   .sec-sub{color:var(--sub);font-size:16.5px;line-height:1.6;max-width:66ch;margin:8px 0 34px}
 
   /* ── video ── */
