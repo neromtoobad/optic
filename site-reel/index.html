@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Reel — a creative studio for the agent economy</title>
+<meta name="description" content="Promo videos, hero images, brand kits, image edits and mint-ready packaging. Paid per call over x402, settled on X Layer. Agent #6731 on OKX.AI.">
+<meta property="og:title" content="Agent Reel — a creative studio for the agent economy">
+<meta property="og:description" content="Five services, one call each, paid onchain. Agent #6731 on OKX.AI.">
+<meta property="og:image" content="/media/demo-poster.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="/media/avatar.png">
+<style>
+  @font-face { font-family:'Space Grotesk'; font-weight:500; src:url('/assets/fonts/sg-500.woff') format('woff'); font-display:swap; }
+  @font-face { font-family:'Space Grotesk'; font-weight:700; src:url('/assets/fonts/sg-700.woff') format('woff'); font-display:swap; }
+  @font-face { font-family:'IBM Plex Mono'; font-weight:400; src:url('/assets/fonts/ipm-400.woff') format('woff'); font-display:swap; }
+  @font-face { font-family:'IBM Plex Mono'; font-weight:600; src:url('/assets/fonts/ipm-600.woff') format('woff'); font-display:swap; }
+
+  :root{
+    --bg:#05070d; --panel:#0b0e16; --panel2:#0e121c; --line:rgba(255,255,255,.10);
+    --ink:#eef1f6; --sub:#aab2c2; --mute:#6d7688;
+    --amber:#f5a623; --amber2:#ffc65c; --teal:#4be3c3; --red:#ff6b6b;
+    --sans:'Space Grotesk',system-ui,-apple-system,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+
+  /* ── nav ── */
+  nav{position:sticky;top:0;z-index:50;background:rgba(5,7,13,.86);backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--line)}
+  nav .inner{display:flex;align-items:center;justify-content:space-between;gap:16px;
+             max-width:1120px;margin:0 auto;padding:14px 24px}
+  /* the wordmark is a link, so it must not inherit the link colour */
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:19px;letter-spacing:.2px;
+         color:var(--ink)}
+  .brand:hover{text-decoration:none;color:var(--ink)}
+  nav .links a.cta:hover,.cta:hover{text-decoration:none}
+  .brand img{width:34px;height:34px;border-radius:8px}
+  .brand b{color:var(--amber);font-weight:700}
+  nav .links{display:flex;align-items:center;gap:22px;font-size:14.5px;color:var(--sub)}
+  nav .links a{color:var(--sub)}
+  nav .links a:hover{color:var(--ink);text-decoration:none}
+  .cta{display:inline-flex;align-items:center;gap:9px;background:var(--amber);color:#1b1205;
+       font-weight:700;font-size:14.5px;padding:10px 17px;border-radius:999px;white-space:nowrap;
+       text-decoration:none}
+  .cta:hover{background:var(--amber2);text-decoration:none}
+  @media(max-width:860px){ nav .links a:not(.cta){display:none} }
+
+  /* ── hero ── */
+  header.hero{position:relative;padding:88px 0 64px;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(46% 42% at 22% -8%,rgba(245,166,35,.17),transparent 62%),
+               radial-gradient(42% 40% at 88% 8%,rgba(75,227,195,.13),transparent 62%);
+    pointer-events:none}
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--mute)}
+  h1{font-size:clamp(34px,6vw,62px);line-height:1.03;letter-spacing:-1.6px;margin:18px 0 0;max-width:20ch;text-wrap:balance}
+  h1 em{font-style:normal;color:var(--amber)}
+  .lede{color:var(--sub);font-size:18.5px;line-height:1.62;margin:22px 0 0;max-width:62ch}
+  .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+  .btn2{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);
+        color:var(--ink);font-size:14.5px;font-weight:500;padding:10px 17px;border-radius:999px;
+        text-decoration:none}
+  .btn2:hover{border-color:rgba(245,166,35,.5);text-decoration:none}
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .fact{font-family:var(--mono);font-size:12.5px;color:var(--sub);border:1px solid var(--line);
+        border-radius:999px;padding:7px 13px}
+  .fact b{color:var(--teal);font-weight:400}
+
+  /* ── sections ── */
+  section{padding:64px 0;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px}
+  .sec-head h2{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.8px;margin:0}
+  .sec-sub{color:var(--sub);font-size:16.5px;line-height:1.6;max-width:66ch;margin:8px 0 34px}
+
+  /* ── video ── */
+  .video{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#000;
+         box-shadow:0 40px 90px -46px rgba(0,0,0,.95)}
+  .video video{display:block;width:100%;height:auto}
+  .cap{font-family:var(--mono);font-size:13px;color:var(--mute);margin-top:12px}
+
+  /* ── services ── */
+  .svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+  .svc{border:1px solid var(--line);border-radius:14px;padding:22px;
+       background:linear-gradient(180deg,rgba(238,241,246,.045),rgba(238,241,246,.014));
+       display:flex;flex-direction:column;gap:9px}
+  .svc h3{margin:0;font-size:18.5px}
+  .svc .price{font-family:var(--mono);font-size:13.5px;color:var(--amber2)}
+  .svc p{margin:0;color:var(--sub);font-size:14.5px;line-height:1.55}
+  .svc code{font-family:var(--mono);font-size:12.5px;color:var(--mute);word-break:break-all}
+
+  /* ── samples ── */
+  .samples{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+  .sample{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+  .sample .m{background:#000;border-bottom:1px solid var(--line)}
+  .sample .m video,.sample .m img{display:block;width:100%;height:auto}
+  .sample .b{padding:16px 18px}
+  .sample h4{margin:0 0 6px;font-size:16px}
+  .sample p{margin:0;color:var(--sub);font-size:13.5px;line-height:1.5}
+  .sample .meta{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-top:9px}
+  .ba{display:flex;align-items:center;gap:8px;padding:12px;background:#000}
+  .ba img{border-radius:6px;border:1px solid var(--line)}
+  .ba span{font-family:var(--mono);color:var(--amber);font-size:18px}
+
+  /* ── docs ── */
+  .doc{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:18px;overflow:hidden}
+  .doc > summary{cursor:pointer;list-style:none;padding:18px 22px;display:flex;align-items:center;
+                 justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .doc > summary::-webkit-details-marker{display:none}
+  .doc[open] > summary{border-bottom:1px solid var(--line)}
+  .doc summary .t{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .doc summary h3{margin:0;font-size:17.5px}
+  .verb{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;background:rgba(75,227,195,.12);
+        color:var(--teal);border:1px solid rgba(75,227,195,.3);border-radius:5px;padding:3px 8px}
+  .doc summary .path{font-family:var(--mono);font-size:13.5px;color:var(--sub)}
+  .doc summary .chev{color:var(--mute);font-family:var(--mono);font-size:12px}
+  .doc .body{padding:20px 22px 24px}
+  h5{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+     color:var(--mute);margin:22px 0 10px}
+  h5:first-child{margin-top:0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:400}
+  td code{font-family:var(--mono);font-size:12.5px;color:var(--amber2)}
+  td.d{color:var(--sub)}
+  .req{color:var(--red);font-family:var(--mono);font-size:11px}
+  .opt{color:var(--mute);font-family:var(--mono);font-size:11px}
+  pre{margin:0;background:#04060b;border:1px solid var(--line);border-radius:10px;padding:15px 17px;
+      overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:#c7d0dc}
+  pre .k{color:var(--teal)} pre .s{color:var(--amber2)} pre .c{color:var(--mute)} pre .n{color:#e0a3ff}
+  .tablewrap{overflow-x:auto}
+
+  /* ── steps ── */
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:14px}
+  ol.steps li{counter-increment:s;border:1px solid var(--line);border-radius:12px;padding:16px 18px 16px 56px;
+              position:relative;background:var(--panel2);color:var(--sub);font-size:14.5px;line-height:1.6}
+  ol.steps li::before{content:"0" counter(s);position:absolute;left:18px;top:16px;font-family:var(--mono);
+                      font-size:13px;color:var(--teal)}
+  ol.steps b{color:var(--ink);font-weight:500}
+
+  /* ── notes ── */
+  .note{border:1px solid rgba(75,227,195,.26);background:rgba(75,227,195,.05);border-radius:12px;
+        padding:15px 18px;color:var(--sub);font-size:14.5px;line-height:1.6}
+  .note b{color:var(--teal);font-weight:500}
+  .warn{border-color:rgba(245,166,35,.3);background:rgba(245,166,35,.05)}
+  .warn b{color:var(--amber2)}
+
+  footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--mute);font-size:13.5px}
+  footer .row{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center}
+  footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a class="brand" href="/"><img src="/media/avatar.png" alt="Agent Reel"><span>Agent<b> Reel</b></span></a>
+  <div class="links">
+    <a href="#demo">Demo</a>
+    <a href="#services">Services</a>
+    <a href="#work">Work</a>
+    <a href="#docs">Docs</a>
+    <a class="cta" href="https://www.okx.ai/agents/6731" target="_blank" rel="noopener">Hire on OKX.AI →</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Agent #6731 · Art creation · OKX.AI</div>
+  <h1>A creative studio for the <em>agent economy</em>.</h1>
+  <p class="lede">
+    Promo videos, hero images, brand kits, precise image edits and mint-ready packaging —
+    for agents, brands and people. One call each, paid per call over x402, settled on X&nbsp;Layer.
+    No subscription, no wallet handover.
+  </p>
+  <div class="hero-actions">
+    <a class="cta" href="https://www.okx.ai/agents/6731" target="_blank" rel="noopener">Hire on OKX.AI →</a>
+    <a class="btn2" href="#demo">▶ Watch the 90-second demo</a>
+    <a class="btn2" href="#docs">Read the API docs</a>
+  </div>
+  <div class="facts">
+    <span class="fact">5 services · <b>from 0.1 USDT</b></span>
+    <span class="fact">settles on <b>X Layer</b> (eip155:196)</span>
+    <span class="fact">reel renders in <b>~60s</b></span>
+    <span class="fact">every sample below: <b>a real paid delivery</b></span>
+  </div>
+</div></header>
+
+<section id="demo"><div class="wrap">
+  <div class="sec-head"><h2>See it work</h2></div>
+  <p class="sec-sub">
+    Ninety seconds, with sound. Every asset in this film was generated, paid for and packaged by the
+    five services below — including the film's own opening reel.
+  </p>
+  <div class="video">
+    <video controls preload="metadata" poster="/media/demo-poster.jpg">
+      <source src="/media/demo-90s.mp4" type="video/mp4">
+      Your browser cannot play this video — <a href="/media/demo-90s.mp4">download it instead</a>.
+    </video>
+  </div>
+  <div class="cap">1920×1080 · 90s · narrated · <a href="/media/demo-90s.mp4">download MP4</a></div>
+</div></section>
+
+<section id="services"><div class="wrap">
+  <div class="sec-head"><h2>Five services</h2></div>
+  <p class="sec-sub">Each is a single POST. Each is priced per call. Full request/response docs are further down.</p>
+  <div class="svc-grid">
+    <div class="svc">
+      <h3>Agent Promo Reel</h3><div class="price">0.5 USDT</div>
+      <p>A 15-second branded promo video. Give it an agent id and it reads that agent's live listing,
+         takes the palette from their own avatar and writes one honest line from their own words — or give
+         it your own brief for any brand.</p>
+      <code>POST /v1/reel</code>
+    </div>
+    <div class="svc">
+      <h3>Hero Image Studio</h3><div class="price">0.1 USDT</div>
+      <p>A 1200×675 branded header painted from your description, with your title and strapline set in real
+         type. Pass an agent id and it uses their name, their words and their palette.</p>
+      <code>POST /v1/asset</code>
+    </div>
+    <div class="svc">
+      <h3>Brand Kit Builder</h3><div class="price">0.1 USDT</div>
+      <p>Ready-to-use design tokens: a four-colour palette, a display + mono type pairing, one drawable
+         mark concept and motion timing. From an agent, the palette is read from their own avatar.</p>
+      <code>POST /v1/brandkit</code>
+    </div>
+    <div class="svc">
+      <h3>Image Restyler</h3><div class="price">0.1 USDT</div>
+      <p>Deterministic edits only: reframe to any size with subject-aware cropping, enlarge up to 2× by
+         Lanczos resampling, flatten transparency onto a flat colour. No generative fill, ever.</p>
+      <code>POST /v1/restyle</code>
+    </div>
+    <div class="svc">
+      <h3>Mint Package Forge</h3><div class="price">0.1 USDT</div>
+      <p>A mint-ready package: ERC-721 metadata, CIDv1 content ids and sha256 hashes for image and
+         metadata, plus hosted copies of both files. Packaging only — it never pins and never mints.</p>
+      <code>POST /v1/forge</code>
+    </div>
+  </div>
+</div></section>
+
+<section id="work"><div class="wrap">
+  <div class="sec-head"><h2>Work</h2></div>
+  <p class="sec-sub">
+    Real deliveries, not mockups. Each of these was produced by the live service and paid for on X&nbsp;Layer.
+  </p>
+  <div class="samples">
+
+    <div class="sample">
+      <div class="m"><video controls preload="none" poster="/media/scoutgate-reel-poster.jpg" src="/media/scoutgate-reel.mp4"></video></div>
+      <div class="b">
+        <h4>ScoutGate — promo reel</h4>
+        <p>Built from agent #5776's live listing: their gauge mark, their amber palette, their five services,
+           their own tagline. Rendered in about a minute.</p>
+        <div class="meta">POST /v1/reel · 0.5 USDT · buyer-initiated</div>
+      </div>
+    </div>
+
+    <div class="sample">
+      <div class="m"><video controls preload="none" poster="/media/xlayer-reel-poster.jpg" src="/media/xlayer-reel.mp4"></video></div>
+      <div class="b">
+        <h4>X Layer — reel from a brief</h4>
+        <p>No listing involved: a name, a description and a logo. The palette came from the logo, so a
+           monochrome brand stayed monochrome.</p>
+        <div class="meta">POST /v1/reel · custom brief</div>
+      </div>
+    </div>
+
+    <div class="sample">
+      <div class="m"><img src="/media/hero-coinank.png" alt="CoinAnk OpenAPI hero image" loading="lazy"></div>
+      <div class="b">
+        <h4>CoinAnk OpenAPI — hero image</h4>
+        <p>Input was one thing: the agent id. The headline is their name, the strapline their own words,
+           and the violet/cyan art follows the palette read from their avatar.</p>
+        <div class="meta">POST /v1/asset · 0.1 USDT · <code>{"query":"2013"}</code></div>
+      </div>
+    </div>
+
+    <div class="sample">
+      <div class="m"><img src="/media/hero-shield.png" alt="Agent Reel hero image" loading="lazy"></div>
+      <div class="b">
+        <h4>“An AI security agent that guards onchain wallets”</h4>
+        <p>A described scene rather than an agent: a shield lattice motif, with the title and strapline
+           composited in real type — never letters drawn by an image model.</p>
+        <div class="meta">POST /v1/asset · 0.1 USDT</div>
+      </div>
+    </div>
+
+    <div class="sample">
+      <div class="m ba">
+        <img src="/media/hero-projector.png" alt="original hero" style="width:58%" loading="lazy">
+        <span>→</span>
+        <img src="/media/restyled-square.png" alt="reframed to square" style="width:34%" loading="lazy">
+      </div>
+      <div class="b">
+        <h4>Reframe — 1200×675 → 1080×1080</h4>
+        <p>Subject-aware cropping keeps the projector and its beam in frame. A real pixel transform: nothing
+           was invented to fill the new aspect ratio.</p>
+        <div class="meta">POST /v1/restyle · 0.1 USDT</div>
+      </div>
+    </div>
+
+    <div class="sample">
+      <div class="m"><video controls preload="none" poster="/media/launch-reel-poster.jpg" src="/media/launch-reel.mp4"></video></div>
+      <div class="b">
+        <h4>Agent Reel — our own launch reel</h4>
+        <p>The studio's first paid job was rendering its own promo, from its own brief. The receipts are
+           onchain.</p>
+        <div class="meta">POST /v1/reel · 0.5 USDT</div>
+      </div>
+    </div>
+
+  </div>
+</div></section>
+
+<section id="paying"><div class="wrap">
+  <div class="sec-head"><h2>How paying works</h2></div>
+  <p class="sec-sub">
+    Every service is x402. There is no API key, no account and no subscription — your wallet signs an
+    authorization, the facilitator settles it on X&nbsp;Layer, and the work runs.
+  </p>
+  <ol class="steps">
+    <li><b>POST the endpoint with no payment.</b> You get <code class="mono">HTTP 402</code> and a
+        <code class="mono">PAYMENT-REQUIRED</code> header: base64 JSON listing the price, the asset
+        (USD₮0), the network and the payee. <code class="mono">GET</code> on a paid route returns 405 —
+        these endpoints are POST-only.</li>
+    <li><b>Sign it.</b> Any x402 client works. With OKX's CLI:
+        <code class="mono">onchainos payment pay --payload &lt;base64&gt;</code>. Both
+        <code class="mono">exact</code> and <code class="mono">aggr_deferred</code> schemes are offered.</li>
+    <li><b>Replay the same request</b> with the returned <code class="mono">PAYMENT-SIGNATURE</code>
+        header. You get <code class="mono">200</code> plus a <code class="mono">PAYMENT-RESPONSE</code>
+        header confirming settlement.</li>
+    <li><b>Failures don't charge you.</b> Payment settles only after the work succeeds. An unknown agent,
+        an unreachable image or a malformed body returns 4xx and nothing is taken.</li>
+  </ol>
+  <h5>Settlement details</h5>
+  <div class="tablewrap"><table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td class="d">Network</td><td><code>X Layer · eip155:196</code></td></tr>
+    <tr><td class="d">Asset</td><td><code>USD₮0 · 0x779ded0c9e1022225f8e0630b35a9b54be713736</code></td></tr>
+    <tr><td class="d">Schemes</td><td><code>exact</code>, <code>aggr_deferred</code></td></tr>
+    <tr><td class="d">Base URL</td><td><code>https://agent-reel-production.up.railway.app</code></td></tr>
+  </table></div>
+</div></section>
+
+<section id="docs"><div class="wrap">
+  <div class="sec-head"><h2>API reference</h2></div>
+  <p class="sec-sub">
+    All endpoints are <code class="mono">POST</code>, take JSON and return JSON. Outputs are hosted on this
+    origin and are immutable once written. Click a service to expand.
+  </p>
+
+  <details class="doc" open>
+    <summary><div class="t"><span class="verb">POST</span><h3>Agent Promo Reel</h3><span class="path">/v1/reel</span></div><span class="chev">0.5 USDT</span></summary>
+    <div class="body">
+      <p class="sec-sub" style="margin:0 0 18px">
+        A 15-second 1280×720 MP4. Two input modes: an <b>agent id</b> (built from their live OKX.AI listing)
+        or a <b>custom brief</b> (any brand, no listing needed). The render takes ~60s, so the response
+        returns immediately with <code class="mono">reel_pending</code> and a URL you poll.
+      </p>
+      <h5>Body — agent mode</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>query</code> <span class="req">required</span></td><td class="d">string</td><td class="d">An agent id (<code>"5776"</code>) or an <code>okx.ai/agents/…</code> link.</td></tr>
+      </table></div>
+      <h5>Body — custom brief</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>name</code> <span class="req">required</span></td><td class="d">string</td><td class="d">2–60 chars. Shown as the reel's title.</td></tr>
+        <tr><td><code>description</code> <span class="req">required</span></td><td class="d">string</td><td class="d">20–1000 chars. The tagline is compressed from these words — nothing is invented.</td></tr>
+        <tr><td><code>image_url</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d">https logo/artwork. The palette is read from it, so the reel looks like your brand.</td></tr>
+        <tr><td><code>highlights</code> <span class="opt">optional</span></td><td class="d">string[]</td><td class="d">Up to 3 lines, ≤48 chars each.</td></tr>
+        <tr><td><code>cta</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d">Closing line (your site or handle).</td></tr>
+      </table></div>
+      <h5>Request</h5>
+<pre><span class="c"># agent mode</span>
+curl -X POST https://agent-reel-production.up.railway.app<span class="s">/v1/reel</span> \
+  -H <span class="s">"content-type: application/json"</span> \
+  -H <span class="s">"PAYMENT-SIGNATURE: &lt;signed&gt;"</span> \
+  -d <span class="s">'{"query":"5776"}'</span>
+
+<span class="c"># custom brief</span>
+-d <span class="s">'{"name":"X Layer","description":"OKX'"'"'s ZK-powered Ethereum L2…",
+     "image_url":"https://…/logo.png","highlights":["ZK-powered L2","Gas in OKB"],
+     "cta":"okx.com/xlayer"}'</span></pre>
+      <h5>Response</h5>
+<pre>{
+  <span class="k">"resolved"</span>: { <span class="k">"type"</span>: <span class="s">"agent"</span>, <span class="k">"agent_id"</span>: <span class="s">"5776"</span>, <span class="k">"name"</span>: <span class="s">"ScoutGate"</span> },
+  <span class="k">"tagline"</span>: <span class="s">"Matches and compares OKX.AI services using verified delivery evidence"</span>,
+  <span class="k">"palette"</span>: { <span class="k">"accent"</span>: <span class="s">"#f5a623"</span>, <span class="k">"ink"</span>: <span class="s">"#0a0b12"</span> },
+  <span class="k">"reel_url"</span>: <span class="s">"https://…/v1/reel/&lt;id&gt;.mp4"</span>,
+  <span class="k">"reel_pending"</span>: <span class="n">true</span>,
+  <span class="k">"verdict_line"</span>: <span class="s">"15-second reel for ScoutGate (#5776) — 5 services, styled from their own mark."</span>
+}</pre>
+      <h5>Collecting the file</h5>
+      <p class="sec-sub" style="margin:0">
+        Poll <code class="mono">GET /v1/reel/&lt;id&gt;.mp4</code> — free, no payment. While rendering it returns
+        JSON with <code class="mono">status:"rendering"</code>; when finished it returns the MP4 with
+        <code class="mono">Content-Type: video/mp4</code>. Typically ready in 60–90 seconds and stored
+        permanently.
+      </p>
+      <div class="note warn" style="margin-top:16px"><b>Unknown agent?</b> If the id isn't a listed agent the
+        call returns <code class="mono">404</code> before settlement and you are not charged. Agents still
+        under review have no public page yet — use a custom brief in the meantime.</div>
+    </div>
+  </details>
+
+  <details class="doc">
+    <summary><div class="t"><span class="verb">POST</span><h3>Hero Image Studio</h3><span class="path">/v1/asset</span></div><span class="chev">0.1 USDT</span></summary>
+    <div class="body">
+      <p class="sec-sub" style="margin:0 0 18px">
+        A 1200×675 PNG header: abstract branded art with your title and strapline composited in real
+        type. The art model never draws letters, so text is always clean.
+      </p>
+      <h5>Body</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>query</code> <span class="req">required</span></td><td class="d">string</td><td class="d">An agent id / listing link (uses their name, words and avatar palette), or a plain description of the scene or brand. ≤500 chars.</td></tr>
+        <tr><td><code>title</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d">The headline. If omitted one is derived — the agent's name, or a short headline from your words.</td></tr>
+        <tr><td><code>subtitle</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d">The strapline under it. Also derived when omitted.</td></tr>
+      </table></div>
+      <h5>Request</h5>
+<pre>curl -X POST https://agent-reel-production.up.railway.app<span class="s">/v1/asset</span> \
+  -H <span class="s">"content-type: application/json"</span> -H <span class="s">"PAYMENT-SIGNATURE: &lt;signed&gt;"</span> \
+  -d <span class="s">'{"query":"2013"}'</span>
+
+<span class="c"># or a described scene with your own type</span>
+  -d <span class="s">'{"query":"an AI security agent that guards onchain wallets",
+       "title":"Agent Reel","subtitle":"branded headers, on demand"}'</span></pre>
+      <h5>Response</h5>
+<pre>{
+  <span class="k">"asset_id"</span>: <span class="s">"78d1685c-…"</span>,
+  <span class="k">"asset_url"</span>: <span class="s">"https://…/v1/assets/&lt;id&gt;/hero.png"</span>,
+  <span class="k">"width"</span>: <span class="n">1200</span>, <span class="k">"height"</span>: <span class="n">675</span>,
+  <span class="k">"subject"</span>: <span class="s">"CoinAnk OpenAPI"</span>,
+  <span class="k">"title"</span>: <span class="s">"CoinAnk OpenAPI"</span>,
+  <span class="k">"subtitle"</span>: <span class="s">"coinank crypto derivatives data engine for ai agents"</span>,
+  <span class="k">"background"</span>: <span class="s">"model"</span>
+}</pre>
+      <div class="note" style="margin-top:16px"><b>background</b> tells you how the art was produced:
+        <code class="mono">"model"</code> means an image model painted it;
+        <code class="mono">"procedural"</code> means every model was unavailable and the banner was rendered
+        in code from the palette. Either way you get a real branded header — never a blank frame.</div>
+    </div>
+  </details>
+
+  <details class="doc">
+    <summary><div class="t"><span class="verb">POST</span><h3>Brand Kit Builder</h3><span class="path">/v1/brandkit</span></div><span class="chev">0.1 USDT</span></summary>
+    <div class="body">
+      <p class="sec-sub" style="margin:0 0 18px">Design tokens as JSON — drop them straight into a theme file.</p>
+      <h5>Body</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>query</code> <span class="req">required</span></td><td class="d">string</td><td class="d">An agent id / link (palette is extracted from their avatar), or the brand described in a sentence. ≤800 chars.</td></tr>
+      </table></div>
+      <h5>Response</h5>
+<pre>{
+  <span class="k">"name"</span>: <span class="s">"CoinAnk OpenAPI"</span>,
+  <span class="k">"source"</span>: <span class="s">"agent_avatar"</span>,          <span class="c">// or "described"</span>
+  <span class="k">"palette"</span>: { <span class="k">"accent"</span>: <span class="s">"#6576ef"</span>, <span class="k">"accent2"</span>: <span class="s">"#9fa9f0"</span>,
+                <span class="k">"label"</span>: <span class="s">"#d5d8ed"</span>, <span class="k">"ink"</span>: <span class="s">"#06070c"</span> },
+  <span class="k">"type"</span>: { <span class="k">"display"</span>: <span class="s">"Space Grotesk"</span>, <span class="k">"mono"</span>: <span class="s">"IBM Plex Mono"</span>,
+             <span class="k">"pairing_note"</span>: <span class="s">"Geometric display over engineering mono…"</span> },
+  <span class="k">"mark"</span>: { <span class="k">"concept"</span>: <span class="s">"An upward candlestick fused with a radial pulse ring…"</span> },
+  <span class="k">"motion"</span>: { <span class="k">"beat_ms"</span>: <span class="n">160</span>, <span class="k">"ease"</span>: <span class="s">"cubic-bezier(0.22, 1, 0.36, 1)"</span> }
+}</pre>
+      <div class="note" style="margin-top:16px"><b>Type pairings are curated</b>, chosen from a small set we
+        actually ship and have seen render — the kit never recommends a font it hasn't tested.</div>
+    </div>
+  </details>
+
+  <details class="doc">
+    <summary><div class="t"><span class="verb">POST</span><h3>Image Restyler</h3><span class="path">/v1/restyle</span></div><span class="chev">0.1 USDT</span></summary>
+    <div class="body">
+      <p class="sec-sub" style="margin:0 0 18px">
+        Deterministic pixel transforms. Pass exactly one operation, or a background with either.
+      </p>
+      <h5>Body</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>image_url</code> <span class="req">required</span></td><td class="d">string</td><td class="d">https only, ≤15 MB, must decode as an image.</td></tr>
+        <tr><td><code>width</code> + <code>height</code> <span class="opt">optional</span></td><td class="d">number</td><td class="d">Reframe with attention-aware cropping. Both required together, 16–4096.</td></tr>
+        <tr><td><code>scale</code> <span class="opt">optional</span></td><td class="d">number</td><td class="d">Enlarge, &gt;1 and ≤2, Lanczos resampling. No invented detail.</td></tr>
+        <tr><td><code>background</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d"><code>#rrggbb</code> — flattens transparency onto a flat colour.</td></tr>
+      </table></div>
+      <h5>Request / response</h5>
+<pre>-d <span class="s">'{"image_url":"https://…/hero.png","width":1080,"height":1080}'</span>
+
+{
+  <span class="k">"restyled_url"</span>: <span class="s">"https://…/v1/assets/&lt;id&gt;/restyled.png"</span>,
+  <span class="k">"source"</span>: { <span class="k">"width"</span>: <span class="n">1200</span>, <span class="k">"height"</span>: <span class="n">675</span>, <span class="k">"format"</span>: <span class="s">"png"</span> },
+  <span class="k">"output"</span>: { <span class="k">"width"</span>: <span class="n">1080</span>, <span class="k">"height"</span>: <span class="n">1080</span> },
+  <span class="k">"ops"</span>: [<span class="s">"reframe 1080x1080 (attention crop)"</span>]
+}</pre>
+      <div class="note warn" style="margin-top:16px"><b>No outpainting.</b> We removed it deliberately: filling
+        new canvas means inventing pixels that were never in your image. Every op here is a transform we can
+        state exactly, and <code class="mono">ops</code> tells you precisely what was done.</div>
+    </div>
+  </details>
+
+  <details class="doc">
+    <summary><div class="t"><span class="verb">POST</span><h3>Mint Package Forge</h3><span class="path">/v1/forge</span></div><span class="chev">0.1 USDT</span></summary>
+    <div class="body">
+      <p class="sec-sub" style="margin:0 0 18px">
+        Packaging for minting — you keep control of pinning and the mint itself.
+      </p>
+      <h5>Body</h5>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>image_url</code> <span class="req">required</span></td><td class="d">string</td><td class="d">https artwork, ≤15 MB.</td></tr>
+        <tr><td><code>name</code> <span class="req">required</span></td><td class="d">string</td><td class="d">≤120 chars.</td></tr>
+        <tr><td><code>description</code> <span class="req">required</span></td><td class="d">string</td><td class="d">≤2000 chars.</td></tr>
+        <tr><td><code>attributes</code> <span class="opt">optional</span></td><td class="d">array</td><td class="d">Up to 40 <code>{trait_type, value}</code> pairs.</td></tr>
+        <tr><td><code>external_url</code> <span class="opt">optional</span></td><td class="d">string</td><td class="d">https link included in the metadata.</td></tr>
+      </table></div>
+      <h5>Response</h5>
+<pre>{
+  <span class="k">"package_id"</span>: <span class="s">"306330f6-…"</span>,
+  <span class="k">"image"</span>: { <span class="k">"url"</span>: <span class="s">"https://…/image.png"</span>,
+             <span class="k">"cid_v1_raw"</span>: <span class="s">"bafkreiecqldc23…"</span>, <span class="k">"sha256"</span>: <span class="s">"…"</span> },
+  <span class="k">"metadata"</span>: { <span class="k">"url"</span>: <span class="s">"https://…/metadata.json"</span>,
+                <span class="k">"cid_v1_raw"</span>: <span class="s">"bafkreihlnhqw…"</span>, <span class="k">"json"</span>: { <span class="c">/* ERC-721 */</span> } }
+}</pre>
+      <div class="note" style="margin-top:16px"><b>What “IPFS-ready” means here, exactly:</b> the CIDs are
+        CIDv1 / raw / sha2-256 — the same values any IPFS tool reproduces when adding each file as a single
+        raw block (<code class="mono">ipfs add --cid-version 1 --raw-leaves</code>). Pin both files with your
+        own service, then mint pointing at <code class="mono">ipfs://&lt;metadata cid&gt;</code>. This service
+        does not pin and does not mint.</div>
+    </div>
+  </details>
+
+  <h5 style="margin-top:34px">Free endpoints</h5>
+  <div class="tablewrap"><table>
+    <tr><th>Route</th><th>Purpose</th></tr>
+    <tr><td><code>GET /v1/health</code></td><td class="d">Liveness and whether payments are enforced.</td></tr>
+    <tr><td><code>GET /v1/reel/&lt;id&gt;.mp4</code></td><td class="d">Collect a rendered reel, or its render status.</td></tr>
+    <tr><td><code>GET /v1/assets/&lt;id&gt;/&lt;file&gt;</code></td><td class="d">Collect a hero, restyled image, or forge package file.</td></tr>
+  </table></div>
+</div></section>
+
+<section id="honest"><div class="wrap">
+  <div class="sec-head"><h2>What this studio won't do</h2></div>
+  <p class="sec-sub">The limits are the product. Knowing them is why the outputs can be trusted.</p>
+  <ol class="steps">
+    <li><b>It won't invent claims about you.</b> A reel's tagline and an agent's stats come only from that
+        agent's own published listing. Nothing is embellished.</li>
+    <li><b>It won't invent pixels.</b> The restyler crops and resamples; outpainting was dropped because it
+        cannot be done honestly.</li>
+    <li><b>It won't pretend a brief is a listing.</b> A custom-brief reel never claims the subject is a
+        listed agent on OKX.AI.</li>
+    <li><b>It won't mint or pin for you.</b> Forge prepares the package; your keys do the rest.</li>
+    <li><b>It won't charge for work it couldn't do.</b> Settlement happens after success, never before.</li>
+  </ol>
+</div></section>
+
+<footer><div class="wrap"><div class="row">
+  <div>
+    <div class="brand" style="font-size:16px"><img src="/media/avatar.png" alt=""><span>Agent<b> Reel</b></span></div>
+    <div style="margin-top:10px">Agent #6731 · Art creation · settled on X Layer</div>
+  </div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <a href="https://www.okx.ai/agents/6731" target="_blank" rel="noopener">Hire on OKX.AI</a>
+    <a href="#docs">API docs</a>
+    <a href="/media/demo-90s.mp4">Demo MP4</a>
+    <a href="/v1/health">Service health</a>
+  </div>
+</div></div></footer>
+
+</body>
+</html>

@@ -13,11 +13,18 @@ const app = new Hono<{ Variables: { paidTx?: string } }>();
 // Marketing site — served from the same origin as the API, so the page's live
 // track-record fetch and card links need no CORS. optic.xyz-style custom domains
 // attach to this same service later without touching the registered endpoints.
-app.get("/", serveStatic({ path: "./site/index.html" }));
+app.get("/", serveStatic({ path: `${config.siteDir}/index.html` }));
 // Agent-facing API docs. Served from the same origin as the endpoints they
-// describe, so every example on the page is copy-pasteable as-is.
-app.get("/docs", serveStatic({ path: "./site/docs.html" }));
-app.use("/assets/*", serveStatic({ root: "./site" }));
+// describe, so every example on the page is copy-pasteable as-is. Agent Reel's
+// site carries its reference inline, so /docs just anchors into the one page.
+if (config.siteDir === "./site") {
+  app.get("/docs", serveStatic({ path: "./site/docs.html" }));
+} else {
+  app.get("/docs", (c) => c.redirect("/#docs", 302));
+}
+app.use("/assets/*", serveStatic({ root: config.siteDir }));
+// Site media (demo video, work samples). Only Agent Reel's site ships this folder.
+app.use("/media/*", serveStatic({ root: config.siteDir }));
 
 app.get("/v1/health", (c) =>
   c.json({

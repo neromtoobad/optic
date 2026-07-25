@@ -35,6 +35,8 @@ COPY src ./src
 COPY assets ./assets
 COPY fixtures ./fixtures
 COPY site ./site
+# Agent Reel's own site (served when SITE_DIR=./site-reel)
+COPY site-reel ./site-reel
 
 # Bake the Chrome headless-shell into the image so the first reel doesn't pay a cold
 # download (and so a render can never fail on a missing browser at runtime).

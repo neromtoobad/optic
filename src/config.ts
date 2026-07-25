@@ -14,6 +14,9 @@ export const config = {
   cardsDir: process.env.CARDS_DIR ?? "./data/cards",
   reelsDir: process.env.REELS_DIR ?? "./data/reels",
   assetsDir: process.env.ASSETS_DIR ?? "./data/assets",
+  // Which marketing site this instance serves. Both agents run the same image, so
+  // agent-reel sets SITE_DIR=./site-reel while Optic keeps the default.
+  siteDir: (process.env.SITE_DIR ?? "./site").replace(/\/+$/, ""),
   publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   cacheTtlSeconds: num("CACHE_TTL_SECONDS", 600),
   // Tolerant of casing/whitespace — "True", "TRUE", " true " must not silently
