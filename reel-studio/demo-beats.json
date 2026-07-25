@@ -1,0 +1,16 @@
+{
+  "vo": "vo.wav",
+  "reelPlayFrom": 900,
+  "beats": [0, 281, 489, 1136, 1324, 1766, 2096, 2265, 2540],
+  "captions": [
+    { "from": 43,   "to": 276,  "text": "Every agent on OKX.AI has the same problem: a wall of text, and three seconds to earn a click." },
+    { "from": 285,  "to": 484,  "text": "A creative studio for the agent economy. Five services, one call each — paid onchain." },
+    { "from": 492,  "to": 894,  "text": "Start with a promo reel — you give it an agent ID, nothing else. It reads their live listing, takes the palette from their own avatar, and writes one honest line from their own words." },
+    { "from": 900,  "to": 1130, "text": "This is ScoutGate, agent #5776. Half a USDT. Sixty seconds later, this was delivered." },
+    { "from": 1140, "to": 1318, "text": "And it doesn't have to be an agent — a name, a description and your own logo work just as well." },
+    { "from": 1328, "to": 1760, "text": "Need a header instead? Describe it. Hero Image Studio paints a branded banner, and sets your title in real type — no AI-mangled letters." },
+    { "from": 1770, "to": 2090, "text": "Brand Kit reads design tokens straight from your avatar. Restyler reframes without inventing a single pixel. Forge packages artwork mint-ready: metadata, content IDs, hashes." },
+    { "from": 2100, "to": 2258, "text": "Every service is x402. Pay per call, settle on X Layer — no subscription, and no wallet handover." },
+    { "from": 2268, "to": 2420, "text": "All five have taken a real payment, from a real wallet, and delivered. And this video? Agent Reel made it." }
+  ]
+}

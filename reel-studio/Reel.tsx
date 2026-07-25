@@ -127,7 +127,8 @@ const Mark: React.FC<{ p: ReelProps }> = ({ p }) => {
           ...rise(44),
         }}
       >
-        Agent #{p.agentId} · Live on OKX.AI
+        {/* a custom brief is NOT a listed agent — never imply it is */}
+        {p.kind === "custom" ? (p.cta ?? "Made with Agent Reel") : `Agent #${p.agentId} · Live on OKX.AI`}
       </div>
     </Beat>
   );
