@@ -1,10 +1,10 @@
 # Optic AI
 
-**One agent that reads every market at once — and tells you where they stop agreeing.**
+**One agent that reads every market at once, tells you where they stop agreeing — and turns your call into an order you place yourself.**
 
 Memecoins, prediction markets, tokenized stocks and social attention as a single connected economy. It does the research, so a 15-second read replaces an hour of tabs.
 
-Live on the OKX.AI agent marketplace as **[Agent #4380](https://www.okx.ai/agents/4380)** — **5.0 ★ · 100% positive · 50 sold** *(as of Jul 16, 2026)*. Built for the OKX.AI Genesis Hackathon.
+Live on the OKX.AI agent marketplace as **[Agent #4380](https://www.okx.ai/agents/4380)** — **5.0 ★ · nine services** *(as of Jul 25, 2026)*. Built for the OKX.AI Genesis Hackathon.
 
 **[optic-ai.xyz](https://optic-ai.xyz)** · **[Agent docs](https://optic-ai.xyz/docs)** · **[Live track record](https://optic-ai.xyz/v1/track-record)**
 
@@ -22,6 +22,8 @@ Ask it a real question and it does the research, then answers with a JSON verdic
 - **"NVDA"** → the OKX tokenized share vs the real close vs where analysts actually sit. Same company, three prices.
 - **paste any token** → a 0–100 rug-safety score with the red flags (dev rug history, holder clusters, LP status).
 - **"today's alpha"** → decisive research-backed picks across prediction, meme momentum, and supply risk.
+- **"btc next 5 min"** → the same up/down window priced on OKX event contracts *and* Polymarket, with the gap between them in probability points.
+- **"btc above 60000 tomorrow, yes, 25 USDT"** → a ready-to-place order: the live market resolved, the book read, the price and size filled in. You submit it with your own key.
 
 It never fabricates a win rate and never issues a trade instruction. Directive language is lint-gated in code before any response leaves the service ([src/lint.ts](src/lint.ts)). Every pick it surfaces is logged and scored when the market resolves on-chain — including when the honest answer is "nothing has resolved yet."
 
@@ -45,11 +47,11 @@ There is no login, no dashboard, no account and no API key. **The payment is the
         │  x402 seller middleware (OKX Payment SDK)  │  ── SQLite: cache · reads · sales · picks
         │  exact + aggr_deferred schemes             │
         └───────────────┬────────────────────────────┘
-                        ▼  resolve (Anthropic classify) → route to mode
+                        ▼  resolve (Anthropic classify + heuristic fallback) → route to mode
    ┌──────────┬──────────┬───────────┬──────────┬───────────┬──────────┬─────────┐
    │ ATTENTION│  MEME    │ PREDICTION│ RESEARCH │ RUG RADAR │ SMART $  │ STOCKS  │
-   │OKX social│OKX trench│ Polymarket│Venice web│OKX cluster│OKX signal│OKX      │
-   │ vibe/KOLs│price/dev │ odds+move │ search   │ +advanced │ feed     │ xStocks │
+   │OKX social│OKX trench│OKX events+│Venice web│OKX cluster│OKX signal│OKX      │
+   │ vibe/KOLs│price/dev │ Polymarket│ search   │ +advanced │ feed     │ xStocks │
    └────┬─────┴────┬─────┴─────┬─────┴────┬─────┴─────┬─────┴────┬─────┴────┬────┘
         └──────────┴───────────┴────┬─────┴───────────┴──────────┴──────────┘
                                     ▼
@@ -59,27 +61,46 @@ There is no login, no dashboard, no account and no API key. **The payment is the
               JSON verdict  +  Venice-backed narrative card (satori/resvg)
                                     ▼
                     track record: every pick logged, scored on resolution
+                                    │
+                                    ▼  caller decides → POST /v1/ticket
+                    ORDER TICKET: resolve live market → read book → size
+                                    ▼
+                 signable draft (OKX key)  |  plugin command (own wallet)
+                          the CALLER signs and submits — never Optic
 ```
 
-**One engine, many lenses.** Adding a capability is a new adapter, not a rewrite. A lens with no data returns `null` — never invented.
+**One engine, many lenses.** Adding a capability is a new adapter, not a rewrite. A lens with no data returns `null` — never invented. The classifier has a deterministic shape-based fallback, so a transient LLM failure degrades a read instead of failing it.
 
 ---
 
-## The seven services
+## The nine services
 
 | Service | Price | Endpoint | What it returns |
 |---|---|---|---|
-| Cross-Venue Market Read | 0.5 USDT | `POST /v1/read` | full cross-venue read + card for any token/narrative |
-| Daily Alpha | 0.5 USDT | `POST /v1/daily` | decisive research-backed picks of the day |
-| Edge Radar | 0.5 USDT | `POST /v1/edge` | today's mispriced markets, research vs price |
-| Stocks Desk | 0.5 USDT | `POST /v1/stocks` | OKX tokenized share vs real close vs analyst consensus |
-| Rug Radar | 0.05 USDT | `POST /v1/rug` | token safety score + red flags |
-| Smart Money | 0.05 USDT | `POST /v1/smart-money` | tokens sharp wallets are accumulating |
-| Narrative Timing | 0.05 USDT | `POST /v1/timing` | early vs late lifecycle for any token |
+| Full Market Check | 0.5 USDT | `POST /v1/read` | full cross-venue read + card for any token, event or narrative |
+| Today's Picks | 0.5 USDT | `POST /v1/daily` | decisive research-backed calls of the day, with the evidence |
+| Mispriced Markets | 0.5 USDT | `POST /v1/edge` | today's mispriced markets, research vs price |
+| Stock Check | 0.5 USDT | `POST /v1/stocks` | OKX tokenized share vs real close vs analyst consensus |
+| **Order Ticket** | 0.1 USDT | `POST /v1/ticket` | a decided position turned into a ready-to-place order |
+| **5-Minute Pulse** | 0.05 USDT | `POST /v1/pulse` | the same 5-min window on two venues + the divergence |
+| Token Safety Check | 0.05 USDT | `POST /v1/rug` | token safety score 0–100 + red flags |
+| Smart Money Watch | 0.05 USDT | `POST /v1/smart-money` | tokens sharp wallets are accumulating |
+| Too Early or Too Late? | 0.05 USDT | `POST /v1/timing` | early vs late lifecycle for any token |
 
 Free: `GET /v1/health` · `GET /v1/track-record` · `GET /v1/card/:id`
 
-Query-scoped services (`read`, `rug`, `timing`, `stocks`) take `{"query":"…"}`. Discovery services (`daily`, `edge`, `smart-money`) need no body.
+Query-scoped services (`read`, `rug`, `timing`, `stocks`) take `{"query":"…"}` — `token`, `address` and `ticker` are accepted aliases. Discovery services (`daily`, `edge`, `smart-money`, `pulse`) need no body. `ticket` takes `{"query":"…","side":"yes|no","usdt":25}`.
+
+**No answer, no charge.** If `rug` or `timing` can't resolve the token or produce its core data, the response is `404` with the honest verdict — returned *before* settlement, so a caller is never charged for a non-answer.
+
+### Order Ticket — construction, never execution
+
+Optic resolves the live market, reads the book, sizes the order and returns the exact payload. **The caller signs and submits with their own key.** No trade key ever touches this server. Three venues resolve automatically:
+
+- **OKX event contracts** (v5 `EVENTS`, USDT-settled) — crypto & gold price events; returns a signable `draft` for `POST /api/v5/trade/order`
+- **5-minute up/down markets** and **Polymarket's full Yes/No catalogue** (sports, elections) — returns a ready-to-run `plugin_rail.command` for the caller's own OKX wallet plugin
+
+A market that can't be constructed returns `404` before settlement.
 
 Full reference: **[optic-ai.xyz/docs](https://optic-ai.xyz/docs)**
 
@@ -134,13 +155,15 @@ Cards: satori + resvg (no headless browser), Venice-generated backgrounds.
 Every lens runs on its own, so failures isolate fast.
 
 ```bash
-npm run edge              # today's mispricing radar
-npm run daily             # daily alpha
-npm run risk -- <token>   # rug radar
-npm run timing -- <token> # narrative timing
-npm run smartmoney        # smart money flow
-npm run stocks -- NVDA    # stocks desk
-npm run scan              # what's heating up
+npm run edge                                  # mispriced markets
+npm run daily                                 # today's picks
+npm run risk -- <token>                       # token safety check
+npm run timing -- <token>                     # too early or too late?
+npm run smartmoney                            # smart money watch
+npm run stocks -- NVDA                        # stock check
+npm run pulse                                 # 5-minute cross-venue pulse
+npm run ticket -- "btc above 60000 tomorrow" yes 25   # order ticket
+npm run scan                                  # what's heating up
 npx tsx scripts/read.ts "who wins the world cup"
 ```
 
