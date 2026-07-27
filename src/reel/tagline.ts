@@ -17,8 +17,9 @@ const SCHEMA = {
   properties: {
     tagline: {
       type: "string",
+      maxLength: 78, // a 3-second beat: it has to be readable at a glance
       description:
-        "One line, 6-14 words, plain English, sentence case. What this agent DOES, in the words a buyer would use. No hype adjectives, no emoji.",
+        "One line, 6-12 words, plain English, sentence case. What this agent DOES, in the words a buyer would use. No hype adjectives, no emoji.",
     },
   },
   required: ["tagline"],
@@ -33,7 +34,8 @@ const SYSTEM =
   "feature, a metric, a speed, or a guarantee. If the listing is vague, stay vague — do " +
   "not fill the gap with invention. " +
   "Plain words. No marketing adjectives (revolutionary, seamless, powerful, cutting-edge, " +
-  "next-gen). No emoji. Say what it does, not how amazing it is.";
+  "next-gen). No emoji. Say what it does, not how amazing it is. " +
+  "Keep it under 12 words — it has to land in three seconds on screen.";
 
 /** Truncate for the prompt — listing blurbs run to thousands of chars of keyword soup. */
 function brief(b: AgentBrief): string {

@@ -20,6 +20,9 @@ const MODELS = ["gemini-3-6-flash", "gemini-3-5-flash-lite", "gemini-3-6-flash"]
 const IN_USD_PER_TOKEN = 0.6 / 1_000_000;
 const OUT_USD_PER_TOKEN = 1.8 / 1_000_000;
 const PER_MODEL_TIMEOUT_MS = 22_000;
+// Minimum completion budget. Measured: a bare classify burns ~427 tokens and a
+// one-line tagline ~442 before any visible output — all reasoning, all counted.
+const REASONING_FLOOR = 900;
 
 /**
  * Model-emitted strings occasionally carry literal control characters mid-sentence
@@ -109,8 +112,10 @@ function cleanLine(content: string, maxLength?: number): string {
     s = s.slice(0, maxLength);
     const lastSpace = s.lastIndexOf(" ");
     if (lastSpace > maxLength * 0.6) s = s.slice(0, lastSpace); // cut on a word boundary
-    s = s.replace(/[\s,;:—-]+$/, "").trim();
   }
+  // Always drop dangling punctuation — a mid-sentence cut ("…and market research,"
+  // or "…smart-") reads as broken on a card or a video beat, whatever caused it.
+  s = s.replace(/[\s,;:—–-]+$/, "").trim();
   return s;
 }
 
@@ -151,7 +156,13 @@ export async function structuredCall<T>(opts: {
             { role: "system", content: system },
             { role: "user", content: opts.user },
           ],
-          max_tokens: opts.maxTokens ?? 1024,
+          // These models spend ~430 completion tokens on internal reasoning BEFORE
+          // emitting a single visible character, and that reasoning counts against
+          // max_tokens. A caller asking for 120 (plenty for a one-line tagline) got
+          // finish_reason:"length" and a line cut mid-word — which shipped into paid
+          // reels. Floor the budget so the visible answer always has room; models
+          // still stop on their own, so this costs nothing on short replies.
+          max_tokens: Math.max(opts.maxTokens ?? 1024, REASONING_FLOOR),
           temperature: 0.6,
         }),
         signal: AbortSignal.timeout(PER_MODEL_TIMEOUT_MS),
